@@ -960,7 +960,7 @@ window.addEventListener('error', function(e) {
 });
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const SK_A = 'wpc_atletas', SK_P = 'wpc_pagos', SK_ID = 'wpc_nextid', SK_PASS = 'wpc_pass', SK_VER = 'wpc_dataver', SK_START = 'wpc_inicio_cobros', SK_TOKEN = 'wpc_synctoken', SK_C = 'wpc_cargos', SK_CP = 'wpc_cargopagos';
-const DATA_VERSION = '5-cargos';
+const DATA_VERSION = '6-roster-jun26';
 const DEFAULT_START = '2026-07';
 const CATEGORY_PATCH_V4 = {"3": "Alevín", "6": "Infantil", "7": "Junior", "8": "Alevín", "9": "Junior", "11": "Cadete", "13": "Junior", "19": "Cadete", "21": "Infantil", "22": "Cadete", "25": "Benjamín", "28": "Infantil", "30": "Cadete", "31": "Alevín", "33": "Benjamín", "34": "Infantil", "35": "Junior", "37": "Benjamín", "38": "Cadete", "40": "Infantil", "44": "Infantil", "45": "Infantil", "46": "Junior", "47": "Alevín", "49": "Cadete", "51": "Alevín", "52": "Junior", "56": "Infantil", "57": "Cadete", "61": "Alevín", "62": "Benjamín", "63": "Alevín", "64": "Cadete", "65": "Alevín", "66": "Junior", "67": "Infantil", "69": "Alevín", "70": "Junior", "72": "Junior", "73": "Cadete", "74": "Alevín", "76": "Cadete", "78": "Cadete", "80": "Cadete", "81": "Infantil", "82": "Infantil", "83": "Infantil", "84": "Cadete", "86": "Junior", "88": "Infantil", "90": "Infantil", "91": "Infantil", "92": "Infantil", "94": "Benjamín", "98": "Infantil", "100": "Infantil", "101": "Cadete", "102": "Cadete", "103": "Alevín", "104": "Infantil", "107": "Benjamín", "108": "Infantil", "110": "Infantil"};
 const NEW_ATLETAS_V4 = [
@@ -1008,6 +1008,134 @@ const NEW_ATLETAS_V4 = [
   }
 ];
 
+const NEW_ATLETAS_V5 = [
+  {
+    "id": 114,
+    "nombre": "Cristian Enriquez",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Masters",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 115,
+    "nombre": "Sergi Martinez Cajide",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Absoluto",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 116,
+    "nombre": "Toni Perez",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Masters",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 117,
+    "nombre": "Jaume Planisi Garcia",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Masters",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 118,
+    "nombre": "Roc Valentino",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Alevín",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 119,
+    "nombre": "Alek Serra Ranta",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Absoluto",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 120,
+    "nombre": "Jamue Solivellas",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Masters",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 121,
+    "nombre": "Pere Frontera",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "Masters",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto y fecha de nacimiento.",
+    "paga": true
+  },
+  {
+    "id": 122,
+    "nombre": "Pau Moronez",
+    "dni": "",
+    "email": "",
+    "tel": "",
+    "categoria": "",
+    "cuota": 45,
+    "estado": "activo",
+    "alta": "",
+    "fnac": "",
+    "notas": "Atleta nuevo: pendiente completar DNI, contacto, fecha de nacimiento y categoría.",
+    "paga": true
+  }
+];
 let atletas = [], pagos = [], cargos = [], cargoPagos = [], nextId = 100;
 let pagAtletas = 1, pagPagos = 1, pagCargos = 1;
 const PER = 20;
@@ -1288,6 +1416,7 @@ function load() {
       // que no existían todavía en el listado.
       atletas.forEach(a => { if (CATEGORY_PATCH_V4[a.id]) a.categoria = CATEGORY_PATCH_V4[a.id]; });
       NEW_ATLETAS_V4.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
+      NEW_ATLETAS_V5.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
       if (nextId <= Math.max(...atletas.map(a => a.id), 0)) nextId = Math.max(...atletas.map(a => a.id)) + 1;
     }
     localStorage.setItem(SK_VER, DATA_VERSION);
