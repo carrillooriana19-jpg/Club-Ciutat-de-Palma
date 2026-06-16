@@ -1314,11 +1314,14 @@ async function iniciarSync(esPrimeraVez) {
       cargoPagos = remoto.cargoPagos || [];
       nextId = remoto.nextId || nextId;
       if (remoto.inicioCobros) localStorage.setItem(SK_START, remoto.inicioCobros);
+      const totalAntes = atletas.length;
+      aplicarParchesRoster();
       localStorage.setItem(SK_A, JSON.stringify(atletas));
       localStorage.setItem(SK_P, JSON.stringify(pagos));
       localStorage.setItem(SK_C, JSON.stringify(cargos));
       localStorage.setItem(SK_CP, JSON.stringify(cargoPagos));
       localStorage.setItem(SK_ID, String(nextId));
+      if (atletas.length !== totalAntes) await pushRemoto(); // sube a la nube los atletas nuevos del parche
     } else if (esPrimeraVez) {
       // No hay nada remoto todavía: subimos lo que tengamos localmente.
       await pushRemoto();
@@ -1335,6 +1338,7 @@ async function iniciarSync(esPrimeraVez) {
       cargoPagos = data.cargoPagos || [];
       nextId = data.nextId || nextId;
       if (data.inicioCobros) localStorage.setItem(SK_START, data.inicioCobros);
+      aplicarParchesRoster();
       localStorage.setItem(SK_A, JSON.stringify(atletas));
       localStorage.setItem(SK_P, JSON.stringify(pagos));
       localStorage.setItem(SK_C, JSON.stringify(cargos));
@@ -1382,6 +1386,19 @@ function save() {
   } catch(e) { console.error(e); }
 }
 
+function aplicarParchesRoster() {
+  // Aplica las categorías asignadas por equipos y añade atletas nuevos que
+  // no existan todavía en el listado (por id), sin duplicar. Es seguro
+  // llamarla varias veces, incluso si los datos vienen de la nube (Firestore)
+  // y nunca pasaron por la migración local basada en DATA_VERSION.
+  atletas.forEach(a => { if (CATEGORY_PATCH_V4[a.id]) a.categoria = CATEGORY_PATCH_V4[a.id]; });
+  NEW_ATLETAS_V4.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
+  NEW_ATLETAS_V5.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
+  if (atletas.length > 0 && nextId <= Math.max(...atletas.map(a => a.id), 0)) {
+    nextId = Math.max(...atletas.map(a => a.id)) + 1;
+  }
+}
+
 function load() {
   try {
     const ra = localStorage.getItem(SK_A);
@@ -1411,17 +1428,12 @@ function load() {
       if (!localStorage.getItem(SK_START)) localStorage.setItem(SK_START, DEFAULT_START);
       const inicio = inicioCobros();
       pagos = pagos.filter(p => !(p.mes < inicio && p.estado==='pendiente' && !p.fecha && !p.notas));
-
-      // Aplica las categorías asignadas por equipos y añade atletas nuevos
-      // que no existían todavía en el listado.
-      atletas.forEach(a => { if (CATEGORY_PATCH_V4[a.id]) a.categoria = CATEGORY_PATCH_V4[a.id]; });
-      NEW_ATLETAS_V4.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
-      NEW_ATLETAS_V5.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
-      if (nextId <= Math.max(...atletas.map(a => a.id), 0)) nextId = Math.max(...atletas.map(a => a.id)) + 1;
+      aplicarParchesRoster();
     }
     localStorage.setItem(SK_VER, DATA_VERSION);
   } catch(e) { atletas = []; pagos = []; seedData(); }
   if (atletas.length === 0) seedData();
+  aplicarParchesRoster();
   atletas.forEach(a => { if (a.paga === undefined) a.paga = true; });
   autoGenerarMesActual();
   initMeses();
