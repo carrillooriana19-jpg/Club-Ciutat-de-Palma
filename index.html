@@ -1387,11 +1387,12 @@ function save() {
 }
 
 function aplicarParchesRoster() {
-  // Aplica las categorías asignadas por equipos y añade atletas nuevos que
-  // no existan todavía en el listado (por id), sin duplicar. Es seguro
-  // llamarla varias veces, incluso si los datos vienen de la nube (Firestore)
-  // y nunca pasaron por la migración local basada en DATA_VERSION.
-  atletas.forEach(a => { if (CATEGORY_PATCH_V4[a.id]) a.categoria = CATEGORY_PATCH_V4[a.id]; });
+  // Añade atletas nuevos que no existan todavía en el listado (por id), sin
+  // duplicar. Es seguro llamarla varias veces, incluso si los datos vienen de
+  // la nube (Firestore) y nunca pasaron por la migración local basada en
+  // DATA_VERSION. IMPORTANTE: esta función NUNCA debe tocar campos de atletas
+  // ya existentes (categoría, cuota, estado, etc.), solo añadir los que falten,
+  // para no pisar cambios manuales hechos por el usuario.
   NEW_ATLETAS_V4.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
   NEW_ATLETAS_V5.forEach(na => { if (!atletas.find(a => a.id === na.id)) atletas.push(na); });
   if (atletas.length > 0 && nextId <= Math.max(...atletas.map(a => a.id), 0)) {
