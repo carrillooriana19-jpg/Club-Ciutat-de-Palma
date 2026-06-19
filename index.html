@@ -427,26 +427,30 @@ tr:last-child td { border-bottom: none; }
       </div>
     </div>
 
-    <button class="nav-item active" id="nav-asistencia" onclick="showTab('asistencia-tab',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      Asistencia
+    <button class="nav-item" id="nav-pagos" style="display:none" onclick="showTab('pagos-tab',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Pagos
+      <span class="nav-badge" id="pagos-nav-badge" style="display:none"></span>
     </button>
     <button class="nav-item" id="nav-admin" style="display:none" onclick="showTab('admin',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>
       Administración
     </button>
+    <button class="nav-item active" id="nav-asistencia" onclick="showTab('asistencia-tab',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Asistencia
+    </button>
     <button class="nav-item" id="nav-atletas" style="display:none" onclick="showTab('atletas-tab',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Atletas
     </button>
+    <button class="nav-item" id="nav-bajas" style="display:none" onclick="showTab('bajas-tab',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></svg>
+      Bajas
+    </button>
     <button class="nav-item" id="nav-config" style="display:none" onclick="showTab('config-tab',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Configuración
-    </button>
-    <button class="nav-item" id="nav-pagos" style="display:none" onclick="showTab('pagos-tab',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      Pagos
-      <span class="nav-badge" id="pagos-nav-badge" style="display:none"></span>
     </button>
 
     <div class="nav-spacer"></div>
@@ -589,7 +593,7 @@ tr:last-child td { border-bottom: none; }
       <!-- ATLETAS (solo admin) -->
       <div id="atletas-tab" class="section">
         <div class="page-title">Atletas</div>
-        <div class="page-sub">Listado completo de atletas, su categoría, y gestión de altas y bajas.</div>
+        <div class="page-sub">Listado completo de atletas: datos de contacto, categoría, cuota y gestión de altas y bajas.</div>
 
         <div class="card">
           <div class="toolbar">
@@ -610,15 +614,35 @@ tr:last-child td { border-bottom: none; }
                 <option value="Absoluto">Absoluto</option>
                 <option value="Absoluto A">Absoluto A</option>
                 <option value="Masters">Masters</option>
+                <option value="Femenino">Femenino</option>
               </select>
-              <input type="search" id="adm-buscar-atleta" placeholder="Buscar atleta..." oninput="renderAdminAtletas()">
+              <input type="search" id="adm-buscar-atleta" placeholder="Buscar nombre, DNI, email..." oninput="renderAdminAtletas()">
             </div>
             <button class="btn btn-primary btn-sm" onclick="openModal('nuevo-atleta')">+ Nuevo atleta</button>
           </div>
           <div class="table-wrap">
             <table class="responsive-cards">
-              <thead><tr><th>Atleta</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Atleta</th><th>Categoría</th><th>Contacto</th><th>Estado</th><th>Cuota</th><th>Deuda</th><th>Acciones</th></tr></thead>
               <tbody id="body-admin-atletas"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- BAJAS (solo admin) -->
+      <div id="bajas-tab" class="section">
+        <div class="page-title">Bajas</div>
+        <div class="page-sub">Atletas dados de baja. Pulsa "Reactivar" para devolverlos a la lista de activos.</div>
+        <div class="card">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <input type="search" id="bajas-buscar" placeholder="Buscar nombre..." oninput="renderBajasTab()">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="responsive-cards">
+              <thead><tr><th>Atleta</th><th>Categoría</th><th>Contacto</th><th>Deuda pendiente</th><th>Acciones</th></tr></thead>
+              <tbody id="body-bajas"></tbody>
             </table>
           </div>
         </div>
@@ -671,11 +695,9 @@ tr:last-child td { border-bottom: none; }
 
         <div class="pg-subnav">
           <button class="pg-subnav-item active" onclick="showPagosSubTab('pg-resumen',this)">Resumen</button>
-          <button class="pg-subnav-item" onclick="showPagosSubTab('pg-atletas',this)">Atletas / Cuotas</button>
           <button class="pg-subnav-item" onclick="showPagosSubTab('pg-pagos',this)">Pagos</button>
           <button class="pg-subnav-item" onclick="showPagosSubTab('pg-cargos',this)">Pagos únicos</button>
           <button class="pg-subnav-item" onclick="showPagosSubTab('pg-alertas',this)">Alertas<span class="nav-badge" id="pg-alertas-badge" style="display:none"></span></button>
-          <button class="pg-subnav-item" onclick="showPagosSubTab('pg-bajas',this)">Bajas</button>
         </div>
 
         <!-- PG RESUMEN -->
@@ -699,32 +721,6 @@ tr:last-child td { border-bottom: none; }
             <div class="card">
               <strong style="font-size:14px">Evolución de ingresos</strong>
               <div id="pg-resumen-grafico" style="margin-top:10px"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PG ATLETAS / CUOTAS -->
-        <div id="pg-atletas" class="pg-subsection">
-          <div class="card">
-            <div class="toolbar">
-              <div class="toolbar-left">
-                <input class="search-input" type="search" placeholder="Buscar nombre, email, DNI..." id="pg-search-atleta" oninput="pagAtletasPag=1;renderPgAtletas()">
-                <select id="pg-filter-estado" onchange="pagAtletasPag=1;renderPgAtletas()">
-                  <option value="">Todos los estados</option>
-                  <option value="activo" selected>Activos</option>
-                </select>
-                <select id="pg-filter-categoria" onchange="pagAtletasPag=1;renderPgAtletas()">
-                  <option value="">Todas las categorías</option>
-                  <option value="__sin__">Sin categoría asignada</option>
-                </select>
-              </div>
-            </div>
-            <div class="table-wrap">
-              <table class="responsive-cards">
-                <thead><tr><th>Nombre</th><th>Categoría</th><th>Contacto</th><th>Estado</th><th>Cuota</th><th>Deuda</th><th></th></tr></thead>
-                <tbody id="pg-body-atletas"></tbody>
-              </table>
-              <div class="pagination" id="pg-pag-atletas"></div>
             </div>
           </div>
         </div>
@@ -801,19 +797,6 @@ tr:last-child td { border-bottom: none; }
           </div>
         </div>
 
-        <!-- PG BAJAS -->
-        <div id="pg-bajas" class="pg-subsection">
-          <div class="card">
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Atletas dados de baja. Pulsa "Reactivar" para devolverlos a la lista de activos.</p>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Nombre</th><th>Categoría</th><th>Contacto</th><th>Deuda pendiente</th><th></th></tr></thead>
-                <tbody id="pg-body-bajas"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
       </div>
 
     </div>
@@ -842,34 +825,78 @@ tr:last-child td { border-bottom: none; }
 
 <!-- MODAL: cambiar contraseña -->
 <div class="modal-overlay" id="modal-ficha-atleta">
-  <div class="modal">
-    <h3>Ficha del atleta</h3>
-    <div style="margin-top:10px">
-      <div style="font-size:12.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">Nombre</div>
-      <div id="fa-nombre" style="font-size:17px;font-weight:600;color:var(--navy);margin-bottom:18px"></div>
-
-      <div style="font-size:12.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">Año de nacimiento</div>
-      <div id="fa-anio" style="font-size:15px;margin-bottom:18px"></div>
-
-      <div style="font-size:12.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">Categoría</div>
-      <div id="fa-categoria" style="font-size:15px;margin-bottom:6px"></div>
+  <div class="modal" style="width:min(640px,94vw)">
+    <h3 id="fa-nombre">Ficha del atleta</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <span class="badge" id="fa-estado-badge"></span>
+      <span class="badge badge-gray" id="fa-categoria-badge"></span>
+      <span class="badge badge-gray" id="fa-cuota-badge"></span>
+    </div>
+    <div class="field-row" style="font-size:13px">
+      <div>
+        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">DNI / NIE</div>
+        <div id="fa-dni" style="margin-bottom:10px">—</div>
+        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Fecha de nacimiento</div>
+        <div id="fa-fnac" style="margin-bottom:10px">—</div>
+        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Municipio de empadronamiento</div>
+        <div id="fa-municipio" style="margin-bottom:10px">—</div>
+      </div>
+      <div>
+        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Email</div>
+        <div id="fa-email" style="margin-bottom:10px">—</div>
+        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Teléfono</div>
+        <div id="fa-tel" style="margin-bottom:10px">—</div>
+        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Tutor legal</div>
+        <div id="fa-tutor" style="margin-bottom:10px">—</div>
+      </div>
+    </div>
+    <div id="fa-notas-wrap" style="font-size:13px;margin-bottom:10px">
+      <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Notas</div>
+      <div id="fa-notas">—</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
+      <div style="font-size:13px;font-weight:600">Historial de pagos</div>
+      <div id="fa-deuda" style="font-size:13px"></div>
+    </div>
+    <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+      <table>
+        <thead><tr><th>Mes</th><th>Importe</th><th>Estado</th><th>Fecha pago</th><th>Notas</th><th></th></tr></thead>
+        <tbody id="fa-historial"></tbody>
+      </table>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-primary" onclick="closeModal('ficha-atleta')">Cerrar</button>
+      <button class="btn" onclick="closeModal('ficha-atleta')">Cerrar</button>
+      <button class="btn btn-primary" onclick="closeModal('ficha-atleta');editarAtleta(window._fichaAtletaId)">Editar atleta</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="modal-nuevo-atleta">
-  <div class="modal">
+  <div class="modal" style="width:min(560px,94vw)">
     <h3 id="na-titulo">Nuevo atleta</h3>
-    <div class="field"><label>Nombre completo</label><input id="na-nombre" placeholder="Nombre y apellidos"></div>
-    <div class="field"><label>Año de nacimiento</label><input id="na-anio" type="number" placeholder="Ej. 2012" min="1950" max="2030"></div>
-    <div class="field">
-      <label>Categoría</label>
-      <select id="na-categoria">
-        <option value="">Sin categoría</option>
-      </select>
+    <div class="field"><label>Nombre completo *</label><input id="na-nombre" placeholder="Nombre y apellidos"></div>
+    <div class="field-row">
+      <div class="field"><label>Fecha de nacimiento</label><input id="na-fnac" type="date"></div>
+      <div class="field"><label>Categoría</label>
+        <select id="na-categoria"><option value="">Sin categoría</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>DNI / NIE</label><input id="na-dni" placeholder="Opcional"></div>
+      <div class="field"><label>Cuota mensual (€)</label><input id="na-cuota" type="number" min="0" value="45"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Email</label><input id="na-email" type="email" placeholder="Opcional"></div>
+      <div class="field"><label>Teléfono</label><input id="na-tel" placeholder="Opcional"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Municipio de empadronamiento</label><input id="na-municipio" placeholder="Opcional"></div>
+      <div class="field"><label>Tutor legal (si menor de edad)</label><input id="na-tutor" placeholder="Opcional"></div>
+    </div>
+    <div class="field"><label>Notas</label><textarea id="na-notas" placeholder="Notas adicionales..."></textarea></div>
+    <div class="field" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="na-paga" checked>
+      <label for="na-paga">Paga cuota mensual</label>
     </div>
     <input type="hidden" id="na-id">
     <div class="login-error" id="na-error"></div>
@@ -930,73 +957,6 @@ tr:last-child td { border-bottom: none; }
 
 
 <!-- MODALES DE PAGOS -->
-<div class="modal-overlay" id="modal-add-atleta-pag">
-  <div class="modal">
-    <h3>Añadir atleta (Pagos)</h3>
-    <div class="field"><label>Nombre completo *</label><input id="nap-nombre" placeholder="Nombre y apellidos"></div>
-    <div class="field-row">
-      <div class="field"><label>Año nacimiento</label><input id="nap-anio" type="number" placeholder="Ej. 2012" min="1950" max="2030"></div>
-      <div class="field"><label>Categoría</label>
-        <select id="nap-categoria"><option value="">Sin categoría</option></select>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>DNI / NIE</label><input id="nap-dni" placeholder="Opcional"></div>
-      <div class="field"><label>Cuota mensual (€)</label><input id="nap-cuota" type="number" min="0" value="45"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Email</label><input id="nap-email" type="email" placeholder="Opcional"></div>
-      <div class="field"><label>Teléfono</label><input id="nap-tel" placeholder="Opcional"></div>
-    </div>
-    <div class="field"><label>Notas</label><textarea id="nap-notas" placeholder="Notas adicionales..."></textarea></div>
-    <div class="field" style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" id="nap-paga" checked>
-      <label for="nap-paga">Paga cuota mensual</label>
-    </div>
-    <div class="login-error" id="nap-error"></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('add-atleta-pag')">Cancelar</button>
-      <button class="btn btn-primary" onclick="addAtletaPag()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-edit-atleta-pag">
-  <div class="modal">
-    <h3>Editar atleta</h3>
-    <div class="field"><label>Nombre completo *</label><input id="eap-nombre" placeholder="Nombre y apellidos"></div>
-    <div class="field-row">
-      <div class="field"><label>Año nacimiento</label><input id="eap-anio" type="number" placeholder="Ej. 2012" min="1950" max="2030"></div>
-      <div class="field"><label>Categoría</label>
-        <select id="eap-categoria"><option value="">Sin categoría</option></select>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>DNI / NIE</label><input id="eap-dni" placeholder="Opcional"></div>
-      <div class="field"><label>Cuota mensual (€)</label><input id="eap-cuota" type="number" min="0"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Email</label><input id="eap-email" type="email" placeholder="Opcional"></div>
-      <div class="field"><label>Teléfono</label><input id="eap-tel" placeholder="Opcional"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Municipio de empadronamiento</label><input id="eap-municipio" placeholder="Opcional"></div>
-      <div class="field"><label>Tutor legal (si menor de edad)</label><input id="eap-tutor" placeholder="Opcional"></div>
-    </div>
-    <div class="field"><label>Dirección</label><input id="eap-direccion" placeholder="Opcional"></div>
-    <div class="field"><label>Notas</label><textarea id="eap-notas"></textarea></div>
-    <div class="field" style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" id="eap-paga">
-      <label for="eap-paga">Paga cuota mensual</label>
-    </div>
-    <input type="hidden" id="eap-id">
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('edit-atleta-pag')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEditAtletaPag()">Guardar cambios</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="modal-add-pago">
   <div class="modal">
     <h3>Añadir pago manual</h3>
@@ -1125,68 +1085,6 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-baja-pag">
-  <div class="modal">
-    <h3>Dar de baja</h3>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">¿Seguro que quieres dar de baja a <strong id="bajapag-nombre"></strong>? Quedará inactivo pero se conserva todo su historial de pagos.</p>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('baja-pag')">Cancelar</button>
-      <button class="btn btn-danger" onclick="confirmarBajaPag()">Confirmar baja</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-ficha-atleta-pag">
-  <div class="modal" style="width:min(640px,94vw)">
-    <h3 id="fap-nombre">Ficha del atleta</h3>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-      <span class="badge" id="fap-estado"></span>
-      <span class="badge badge-gray" id="fap-categoria"></span>
-      <span class="badge badge-gray" id="fap-cuota"></span>
-    </div>
-    <div class="field-row" style="font-size:13px">
-      <div>
-        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">DNI / NIE</div>
-        <div id="fap-dni" style="margin-bottom:10px">—</div>
-        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Fecha de nacimiento</div>
-        <div id="fap-fnac" style="margin-bottom:10px">—</div>
-        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Municipio de empadronamiento</div>
-        <div id="fap-municipio" style="margin-bottom:10px">—</div>
-      </div>
-      <div>
-        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Email</div>
-        <div id="fap-email" style="margin-bottom:10px">—</div>
-        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Teléfono</div>
-        <div id="fap-tel" style="margin-bottom:10px">—</div>
-        <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Tutor legal</div>
-        <div id="fap-tutor" style="margin-bottom:10px">—</div>
-      </div>
-    </div>
-    <div style="font-size:13px;margin-bottom:10px">
-      <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Dirección</div>
-      <div id="fap-direccion">—</div>
-    </div>
-    <div id="fap-notas-wrap" style="font-size:13px;margin-bottom:10px">
-      <div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Notas</div>
-      <div id="fap-notas">—</div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
-      <div style="font-size:13px;font-weight:600">Historial de pagos</div>
-      <div id="fap-deuda" style="font-size:13px"></div>
-    </div>
-    <div class="table-wrap" style="max-height:220px;overflow-y:auto">
-      <table>
-        <thead><tr><th>Mes</th><th>Importe</th><th>Estado</th><th>Fecha pago</th><th>Notas</th><th></th></tr></thead>
-        <tbody id="fap-historial"></tbody>
-      </table>
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('ficha-atleta-pag')">Cerrar</button>
-      <button class="btn btn-primary" onclick="editarDesdefichaPag()">Editar atleta</button>
-    </div>
-  </div>
-</div>
-
 <script type="module">
   window.__fb = window.__fb || { ready: false };
   try {
@@ -1236,14 +1134,14 @@ window.addEventListener('error', function(e) {
 });
 
 /* ---------- DATOS BASE ---------- */
-const ATLETAS_SEED = [{"id": 1, "nombre": "Josep Aguilella Mondejar", "categoria": "", "estado": "activo", "anioNacimiento": 1996, "dni": "78718928W", "municipio": "Madrid", "tutor": "", "email": "aguilella.pep@gmail.com", "direccion": "Avenida Francisco Pi y Margall 19, 6A"}, {"id": 2, "nombre": "Lucas Agulló Vergara", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "74442126G", "municipio": "llucmajor", "tutor": "", "email": "lucas.av.wp@gmail.com", "direccion": "C/Mimosa 4B Llucmajor 07609"}, {"id": 3, "nombre": "William Alarcón Mátev", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "41711884G", "municipio": "Palma", "tutor": "Rubén Alarcón Bover", "email": "rubenalarconbover@gmail.com", "direccion": "Bisbe Bernat Nadal n13, esc5, 1A"}, {"id": 4, "nombre": "Felipe Simon Alfonso", "categoria": "", "estado": "activo", "anioNacimiento": 1997, "dni": "YA9691344", "municipio": "Palma", "tutor": "", "email": "felipe.alfonso4897@gmail.com", "direccion": "Carrer de Francesc fiol i Juan 2. Piso 3ro apt 13"}, {"id": 5, "nombre": "Julio Ballesteros Martinez", "categoria": "", "estado": "activo", "anioNacimiento": 1978, "dni": "43127175J", "municipio": "Marratxí", "tutor": "", "email": "julioballesterosmartinez@gmail.com", "direccion": "C/Anselm Turmeda 9F"}, {"id": 6, "nombre": "Pau Ballesteros Sastre", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "54627827K", "municipio": "Marratxí", "tutor": "Julio Ballesteros Sastre", "email": "julioballesterosmartinez@gmail.com", "direccion": "Anselm Turmeda 9 f"}, {"id": 7, "nombre": "Kyron Barbieri Carecho", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2009, "dni": "Y4990635v", "municipio": "Fornalutx", "tutor": "Daniela Barbieri", "email": "danibarbi@hotmail.com", "direccion": "Diseminado sector número 1, 938"}, {"id": 8, "nombre": "Marc Barceló Núñez", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "55087505k", "municipio": "Palma", "tutor": "Gisela Núñez", "email": "violeta.gn@hotmail.com", "direccion": "Calle Castell fidardo número 10 bajo"}, {"id": 9, "nombre": "Biel Bas", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45614896P", "municipio": "Marratxí", "tutor": "Climent Megías Gutíerrez", "email": "sonalegre@nodo50.org", "direccion": "Camí de Son Alegre,34 07141 Pla de na Tesa Marratxí"}, {"id": 10, "nombre": "Emilio Bautista Armiñana", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "02740195K", "municipio": "Palma de Mallorca", "tutor": "", "email": "emilio10barmi@gmail.com", "direccion": "Carrer de l'Orquídia 2 2ºB"}, {"id": 11, "nombre": "Mateu Bennasar Vidal", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "41662764N", "municipio": "Palma", "tutor": "Beatriz vidal Torrens", "email": "bea@marasesoria.com", "direccion": "Cl. Salvador Espriu, 49 bjs a"}, {"id": 12, "nombre": "Pablo Cabrera Lagartera", "categoria": "", "estado": "activo", "anioNacimiento": 2010, "dni": "49606547D", "municipio": "PALMA", "tutor": "MARIA LUISA LAGARTERA RODRÍGUEZ", "email": "maguylr@gmail.com", "direccion": "C/ MATEU ENRIC LLADÓ 34 A - 3E - 07002 PAL"}, {"id": 13, "nombre": "Jaume Campins Busquets", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45691628N", "municipio": "Fornalutx", "tutor": "Margarita Busquets Bisbal", "email": "margatuna@hotmail.com", "direccion": "arbona colom, 18"}, {"id": 14, "nombre": "Margarita Carolina Carrasco Martí", "categoria": "", "estado": "activo", "anioNacimiento": 1971, "dni": "41737927B", "municipio": "Palma", "tutor": "", "email": "mcarolcarrasco@gmail.com", "direccion": "CAMINO DE GENOVA, 45, 1ºB"}, {"id": 15, "nombre": "Daniel Chica Gonzalez", "categoria": "", "estado": "activo", "anioNacimiento": 2013, "dni": "49864995Y", "municipio": "Palma", "tutor": "Monica Gonzalez Reina", "email": "moni1206@gmail.com", "direccion": "Henri Dunant, 1, escalera 1, bajos G"}, {"id": 16, "nombre": "Alberto José Comas Riutort", "categoria": "", "estado": "activo", "anioNacimiento": 1983, "dni": "43116074k", "municipio": "Palma", "tutor": "", "email": "alcomasriu@gmail.com", "direccion": "Francesc fiol i joan 4. Palma"}, {"id": 17, "nombre": "Javier Correa Villalonga", "categoria": "", "estado": "activo", "anioNacimiento": 1999, "dni": "43466411E", "municipio": "Marratxí", "tutor": "", "email": "xaviercorreavillalonga@gmail.com", "direccion": "C/Narcis 7"}, {"id": 18, "nombre": "Pablo Correa Villalonga", "categoria": "", "estado": "activo", "anioNacimiento": 2001, "dni": "43466409C", "municipio": "Marratxí", "tutor": "", "email": "pablocorreavillalonga@gmail.com", "direccion": "Calle Narcís 7a, Marratxí, 07141"}, {"id": 19, "nombre": "Iker Crespí Frías", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "49926405Y", "municipio": "Palma", "tutor": "Jaime Crespí Tous", "email": "j21781@hotmail.com", "direccion": "Parellades 8 4º"}, {"id": 20, "nombre": "Bruno Cruz Martin", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "55314460N", "municipio": "Rivas-Vaciamadrid", "tutor": "", "email": "brunocovivar@gmail.com", "direccion": "Calle Profesor Bacterio, 19"}, {"id": 21, "nombre": "Víctor Cuesta Soler", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "46432595B", "municipio": "Palma", "tutor": "Ana Maria Soler Rodríguez", "email": "anasoler75@gmail.com", "direccion": "C/ Calvià 18 B8 07015 Palma"}, {"id": 22, "nombre": "Joan De Juan Calafell", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49611021K", "municipio": "MARRATXI", "tutor": "MARIA ANTÒNIA CALAFELL CLADERA", "email": "macalafell@conselldemallorca.net", "direccion": "C. Antoni Furio, número 28, Bajos"}, {"id": 23, "nombre": "Mario Dzidzanovic Marinkovic", "categoria": "", "estado": "activo", "anioNacimiento": 2000, "dni": "43220718S", "municipio": "Soller", "tutor": "", "email": "mariodzidzanovic@gmail.com", "direccion": "C/ Adela Oliver Llinas 12 2-9"}, {"id": 24, "nombre": "Ariel Eder", "categoria": "", "estado": "activo", "anioNacimiento": 1985, "dni": "55749238K", "municipio": "Alaró", "tutor": "", "email": "ederep@gmail.com", "direccion": "Pol 4, Parcela 572, 07340 - Alaró"}, {"id": 25, "nombre": "León Eder Ramirez", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2017, "dni": "54875769T", "municipio": "Alaró", "tutor": "Ariel Eder", "email": "ederep@gmail.com", "direccion": "Pol 4, Parcela 572, 07340 - Alaró, Islas Baleares"}, {"id": 26, "nombre": "David Elias De Quirós Oliver", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "49483474D", "municipio": "Palma De Mallorca", "tutor": "", "email": "david.eliasoliver@gmail.com", "direccion": "Carrer de Ramon y Cajal,15"}, {"id": 27, "nombre": "Sergio Enjuto Mendez", "categoria": "", "estado": "activo", "anioNacimiento": 1980, "dni": "09342575K", "municipio": "Palma de mallorca", "tutor": "", "email": "sergioenjuto@gmail.com", "direccion": "Henri Dunant nº1, esc-3, 3-h"}, {"id": 28, "nombre": "Sergi Enjuto Vidal", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49776505C", "municipio": "Palma de Mallorca", "tutor": "Sergio Enjuto Mendez", "email": "sergioenjuto@gmail.com", "direccion": "Henri Dunant n°1 esc-3 3-h, 07004"}, {"id": 29, "nombre": "Sofía Antonia Fenger", "categoria": "", "estado": "activo", "anioNacimiento": 2015, "dni": "Y6844965H", "municipio": "Marratxi", "tutor": "Michal Fenger", "email": "eltorofenger@gmail.com", "direccion": "Carrer Ca ses monges 18 07141 Marratxi"}, {"id": 30, "nombre": "Diego Galiana Fuster", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49866933N", "municipio": "LLOSETA", "tutor": "ANTONIA FUSTER CANTALLOPS", "email": "duende-cilla@hotmail.com", "direccion": "ANTONI OLIVER 21"}, {"id": 31, "nombre": "Mark Garau Trautmann", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "52031942P", "municipio": "Palma de Mallorca", "tutor": "Enrique Garau Perez", "email": "mrkeeke@gmail.com", "direccion": "Alvaro De Bazán 19 3A"}, {"id": 32, "nombre": "Manuel Garcia Borsani", "categoria": "", "estado": "activo", "anioNacimiento": 1999, "dni": "45371300M", "municipio": "Palma de Mallorca", "tutor": "", "email": "elmanu001.mgb@gmail.com", "direccion": "Calle Zaforteza 48"}, {"id": 33, "nombre": "Xavi García Oton", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "54876165M", "municipio": "Marratxi", "tutor": "José Javier García Romero", "email": "soyjavi79@gmail.com", "direccion": "Cas Diligències 12, Sa Cabaneta. Marratxi"}, {"id": 34, "nombre": "Kamal Garcia Serroukh", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49772215P", "municipio": "MARRATXI", "tutor": "ALVARO GARCIA COLALDO", "email": "walker.agc@gmail.com", "direccion": "calle herba sana, 15"}, {"id": 35, "nombre": "Ismael Garcia Serroukh", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45186571N", "municipio": "MARRATXI", "tutor": "ALVARO GARCIA COLLADO", "email": "walker.agc@gmail.com", "direccion": "calle herba sana, 15"}, {"id": 36, "nombre": "Jaime Gener Zulla", "categoria": "", "estado": "activo", "anioNacimiento": 1991, "dni": "41744804B", "municipio": "Ciutadella", "tutor": "", "email": "generzulla@gmail.com", "direccion": "C/terrassa"}, {"id": 37, "nombre": "Aaron Gomez Petro", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "54871555H", "municipio": "Marratxi", "tutor": "Óscar Gómez Herreros", "email": "ogomher@gmail.com", "direccion": "Marti Serra Batle, 38B"}, {"id": 38, "nombre": "Agustin Alberto González Peña", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "55234238Z", "municipio": "PALMA DE MALLORCA", "tutor": "AGUSTIN GONZÁLEZ SÁNCHEZ", "email": "jennipherp@hotmail.com", "direccion": "C/ DE LA PURSIANA, 8, 2B, 07013 PALMA"}, {"id": 39, "nombre": "Agustín Gilberto González Sánchez", "categoria": "", "estado": "activo", "anioNacimiento": 1973, "dni": "44731777C", "municipio": "PALMA", "tutor": "", "email": "agustin010@hotmail.com", "direccion": "C/DE LA PURSIANA, 8, 2B, 07013 PALMA"}, {"id": 40, "nombre": "Rubén Guerrero Dominguis", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "54875028H", "municipio": "Marratxi", "tutor": "Abraham Guerrero Suárez", "email": "aguerrero008@gmail.com", "direccion": "Calle Pujol n5 bajo izquierda b"}, {"id": 41, "nombre": "Maria Pilar Jurado Núñez", "categoria": "", "estado": "activo", "anioNacimiento": 1977, "dni": "01931391N", "municipio": "PALMA", "tutor": "", "email": "pilujn@hotmail.com", "direccion": "Pare Bartomeu Pou, 2"}, {"id": 42, "nombre": "Antoni Maria Llauradó Estrany", "categoria": "", "estado": "activo", "anioNacimiento": 1997, "dni": "43225972W", "municipio": "Ciutat", "tutor": "", "email": "ninguno@gmail.com", "direccion": "Can Puigdorfila n4 3a"}, {"id": 43, "nombre": "José Rafael López Cancio Ariztoy", "categoria": "", "estado": "activo", "anioNacimiento": 1990, "dni": "43194943t", "municipio": "Palma", "tutor": "", "email": "rlcancio5@gmail.com", "direccion": "Carrer ocells n 34"}, {"id": 44, "nombre": "Martín López Jarque", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49868659J", "municipio": "MARRATXI", "tutor": "ÁNGEL LÓPEZ BAYARRI", "email": "bayarri82@hotmail.com", "direccion": "CALLE JOAN BAUZA 5B - MARRATXI"}, {"id": 45, "nombre": "Hugo Lopez Muñoz", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "54622160N", "municipio": "Palma", "tutor": "Verónica Muñoz", "email": "Vero_nik_9@hotmail.com", "direccion": "Calle Noguer, 6"}, {"id": 46, "nombre": "Adrián Lugo Portillo", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2009, "dni": "49605965W", "municipio": "Palma de Mallorca", "tutor": "Juan Jose Lugo Reina", "email": "juanjoselugo25@hotmail.com", "direccion": "C/ Lleó XIII, 55 2º 1ª 07198 Palma"}, {"id": 47, "nombre": "Markel Luis Merino", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "49928365B", "municipio": "PALMA DE MALLORCA", "tutor": "MARCO ANTONIO LUIS SANTOS", "email": "marco.aluis@hotmail.com", "direccion": "CIUDAD DE LA PLATA, N°1, TORRE A, 6°A. 0700"}, {"id": 48, "nombre": "Juan Lumbreras Coca", "categoria": "", "estado": "activo", "anioNacimiento": 1977, "dni": "43104961V", "municipio": "Palma de Mallorca", "tutor": "", "email": "juan.lumbreras@gmail.com", "direccion": "Calle Son Puig 4 bajo 1"}, {"id": 49, "nombre": "Jon Lumbreras Rojo", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49614533Z", "municipio": "Palma de Mallorca", "tutor": "Juan Lumbreras Coca", "email": "juan.lumbreras@gmail.com", "direccion": "Calle Son Puig 4 bajo 1"}, {"id": 50, "nombre": "Leyre Lumbreras Rojo", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "46389239X", "municipio": "Palma de Mallorca", "tutor": "", "email": "leyre.lumbreras@gmail.com", "direccion": "Carrer Son Puig, 4"}, {"id": 51, "nombre": "Pablo Luna Ramón", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "03234337P", "municipio": "Palma", "tutor": "JUAN LUNA BALAIRÓN", "email": "jlunbal@gmail.com", "direccion": "Carrer Francisco Rover 4, 4A"}, {"id": 52, "nombre": "Lluc David Mengual Fuster", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45189081S", "municipio": "Palma", "tutor": "David Mengual Alsina", "email": "damenal2@gmail.com", "direccion": "Carrer sant isidre llaurador n23"}, {"id": 53, "nombre": "Pol Mengual Fuster", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "43469622J", "municipio": "Palma", "tutor": "", "email": "pmengualfuster@gmail.com", "direccion": "C/ st Isidre llaurador 23"}, {"id": 54, "nombre": "Cesc Molina Ducros", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "45370842F", "municipio": "Palma", "tutor": "", "email": "molinacesc4@gmail.com", "direccion": "Carrer Cuba 2B"}, {"id": 55, "nombre": "Francisco Molina Fresneda", "categoria": "", "estado": "activo", "anioNacimiento": 1973, "dni": "34068487j", "municipio": "Marratxí", "tutor": "", "email": "xiscko@gmail.com", "direccion": "Can Valls 7C Es Pla de Na Tesa"}, {"id": 56, "nombre": "José Jaice Mora Mailey", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49779935T", "municipio": "Palma de Mallorca", "tutor": "Louise Mailey", "email": "bluebells6606@gmail.com", "direccion": "Avenida de Alemania 7 1-2"}, {"id": 57, "nombre": "Carlos Morlá Forteza", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "52030541x", "municipio": "Palma", "tutor": "Marta Forteza Guanter", "email": "mafortezag@gmail.com", "direccion": "Calle castella la mantxa n.19 1a"}, {"id": 58, "nombre": "Pedro Gabriel Morlä Murillo", "categoria": "", "estado": "activo", "anioNacimiento": 1976, "dni": "44325918L", "municipio": "PALMA DE MALLORCA", "tutor": "", "email": "pmorla@gmail.com", "direccion": "CALLE CASTILLA LA MANCHA, 19 1A"}, {"id": 59, "nombre": "Bohdan Motyl", "categoria": "", "estado": "activo", "anioNacimiento": 2004, "dni": "Z1387478P", "municipio": "Palma", "tutor": "", "email": "bohdanmot99@gmail.com", "direccion": "Carrer D'Antoni Lliteres 12"}, {"id": 60, "nombre": "Jacinto Manuel Moya Díaz", "categoria": "", "estado": "activo", "anioNacimiento": 1982, "dni": "46957220Y", "municipio": "FORMENTERA", "tutor": "", "email": "jacinto.moya@gmail.com", "direccion": "CALLE CALA PETITA 8 PALMA"}, {"id": 61, "nombre": "Pau Moya Tugores", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "49927753C", "municipio": "PALMA", "tutor": "JACINTO MOYA DÍAZ", "email": "jacinto.moya@gmail.com", "direccion": "CALLE GASPAR SABATER 10 3B - 07010 PALMA"}, {"id": 62, "nombre": "Tomeu Mudoy Morales", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "30854690Y", "municipio": "Palma", "tutor": "Marta morales", "email": "martalmorales87@gmail.com", "direccion": "Joan bonet"}, {"id": 63, "nombre": "Aníbal Muñíz Marín", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "49924871J", "municipio": "Palma", "tutor": "Yolanda Marín Rodríguez de Tembleque", "email": "yolandamrdt@gmail.com", "direccion": "Bolero, 2"}, {"id": 64, "nombre": "Marc Nicolás Buele", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "49605183w", "municipio": "Llucmajor", "tutor": "Silvia Buele Zamora", "email": "silbuele@gmail.com", "direccion": "C/ Churruca 5"}, {"id": 65, "nombre": "Marta Nicolás Buele", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "52034481v", "municipio": "Llucmajor", "tutor": "Silvia Buele Zamora", "email": "silbuele@gmail.com", "direccion": "C/ Churruca 5"}, {"id": 66, "nombre": "Yago Ojea Arana", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "43479964M", "municipio": "Palma de Mallorca (Son Rapinya)", "tutor": "Alicia Arana Andrade", "email": "ojea.arana@hotmail.com", "direccion": "Camino Vecinal de Son Rapinya nº 31 letra: A pi"}, {"id": 67, "nombre": "Luis Manuel Paniagua Leal", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49773281Q", "municipio": "PALMA", "tutor": "ALEJANDRO PANIAGUA REDONDO", "email": "alejandroprd1@gmail.com", "direccion": "Calle juan gris 45 bajo A"}, {"id": 68, "nombre": "Sergio Parrilla Garcia", "categoria": "", "estado": "activo", "anioNacimiento": 1983, "dni": "43122867Y", "municipio": "Palma", "tutor": "", "email": "sergiowp_1_@hotmail.com", "direccion": "Jacinto verdaguer Nº37 Bjs C"}, {"id": 69, "nombre": "Andreu Pascual", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "11200135D", "municipio": "Palma", "tutor": "Marga Puig Salva", "email": "marga.p.s.palma1@gmail.com", "direccion": "Emilia Sureda 1"}, {"id": 70, "nombre": "Jaime Pascual Tudela", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45694812E", "municipio": "Palma", "tutor": "José Luis Pascual Ripoll", "email": "jlpascual@cograsova.es", "direccion": "Dolors Gual de Torrella 24"}, {"id": 71, "nombre": "Carlos Payeras Biayna", "categoria": "", "estado": "activo", "anioNacimiento": 1991, "dni": "43175818B", "municipio": "Palma", "tutor": "", "email": "payeras_swim1991@hotmail.com", "direccion": "Pons y gallarza 43"}, {"id": 72, "nombre": "David Picó Torrejón", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "46393659Z", "municipio": "Palma", "tutor": "Sebastián Picó Benasar", "email": "adipico@gmail.com", "direccion": "Dentol 25 A"}, {"id": 73, "nombre": "Héctor Picó Torrejón", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49924299Q", "municipio": "Palma", "tutor": "Sebastià Picó Bennasar", "email": "adipico@gmail.com", "direccion": "Déntol, 25A,"}, {"id": 74, "nombre": "Luis Planisi Del Valle", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "55238804A", "municipio": "Palma de mallorca", "tutor": "Tomeu Planisi Garcia", "email": "tomeuplanisi@gmail.com", "direccion": "Dentol 3A"}, {"id": 75, "nombre": "Francisco Gabriel Pons Beltrán", "categoria": "", "estado": "activo", "anioNacimiento": 1981, "dni": "43150001t", "municipio": "Palma", "tutor": "", "email": "fotofg91@gmail.com", "direccion": "Setze de juliol n1 2c C"}, {"id": 76, "nombre": "Hugo Pons Valent", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "4238954V", "municipio": "palma", "tutor": "Francisco Gabriel Pon Beltran", "email": "franciscopons91@gmail.com", "direccion": "calle setze de juliol 1 2C"}, {"id": 77, "nombre": "Iris Pons Valent", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "41713280N", "municipio": "Palma", "tutor": "", "email": "franciscopons91@gmail.com", "direccion": "Setze de juliol n1 2c"}, {"id": 78, "nombre": "Noé Pregal Yern", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49608348Q", "municipio": "Palma", "tutor": "Margarita Yern Pomar", "email": "margapiano@hotmail.com", "direccion": "Ocells 16 3 A"}, {"id": 79, "nombre": "Hugo Rada Rodríguez", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "46275325S", "municipio": "Marratxí", "tutor": "", "email": "hrada2005@gmail.com", "direccion": "Avda Pont Des Caulls 2 Pta 1B"}, {"id": 80, "nombre": "Pau Ramonell Oliver", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "46392222A", "municipio": "Palma", "tutor": "Antoni Ramonell Alzamora", "email": "aramonell@yahoo.es", "direccion": "C/ San Francisco de Sales, 112 07004 Palma"}, {"id": 81, "nombre": "Bosco Ramos Juaneda", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49928956G", "municipio": "Marratxi", "tutor": "Azahara Juaneda Sánchez", "email": "azaharajs@hotmail.com", "direccion": "C/Joan crespi 12 3J"}, {"id": 82, "nombre": "Pedro Ratto Antich", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49866760T", "municipio": "Palma", "tutor": "Gerardo Ratto Sosa-Díaz", "email": "gerardo.ratto@protonmail.com", "direccion": "Avenida del Cid 29, 3"}, {"id": 83, "nombre": "Aleix Rauba Mulet", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "41695997X", "municipio": "PALMA DE MALLORCA", "tutor": "MARÍA JOSÉ MULET SEGUÍ", "email": "mjmuletsegui@hotmail.es", "direccion": "PLAZA SANTA ELISABET, 6-4°"}, {"id": 84, "nombre": "Ivan Real Coca", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "52031644D", "municipio": "PALMA", "tutor": "", "email": "cocareal@hotmail.es", "direccion": "C/ JAUME BUJOSA, 10"}, {"id": 85, "nombre": "Joana Maria Riera Darder", "categoria": "", "estado": "activo", "anioNacimiento": 1980, "dni": "43079754H", "municipio": "Muro", "tutor": "", "email": "joanamaria5@gmail.com", "direccion": "Calle General Barceló 5"}, {"id": 86, "nombre": "Lluc Roca López", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2009, "dni": "45694560T", "municipio": "PALMA", "tutor": "M Rosa López García-Soto", "email": "mrosalgs@gmail.com", "direccion": "C/ Pere Oliver Domenge, 21, bjos A. 07013"}, {"id": 87, "nombre": "Angel Gabriel Rojas Borges", "categoria": "", "estado": "activo", "anioNacimiento": 1994, "dni": "60991417V", "municipio": "PALMA", "tutor": "", "email": "angelrwp7@gmail.com", "direccion": "CARRER D'ANTONI LLITERES, 12, BAJO A, 0701"}, {"id": 88, "nombre": "Sergio Rosas López", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49865468L", "municipio": "Palma", "tutor": "Maria Ángeles López López", "email": "marianlopez74@hotmail.com", "direccion": "c/ Juan Gris nº 7 5ºA"}, {"id": 89, "nombre": "Joan Arnau Rosselló Galmés", "categoria": "", "estado": "activo", "anioNacimiento": 1989, "dni": "43185035M", "municipio": "PALMA", "tutor": "", "email": "arnaurossello@gmail.com", "direccion": "Francesc Suau 20 6a"}, {"id": 90, "nombre": "Rubén Ruano Tudela", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "52034050T", "municipio": "Marratxi", "tutor": "Carlota Tudela Hermua", "email": "carlotatudela75@gmail.com", "direccion": "Carrer d'Antoni Ribas 5. Marratxi. 07141"}, {"id": 91, "nombre": "Francesco Andreu Salvatore Pichs", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "60924057R", "municipio": "Palma", "tutor": "Edoardo Salvatore", "email": "rishkids@icloud.com", "direccion": "Av. Gabriel Roca, 2, 4B"}, {"id": 92, "nombre": "Aleix Sánchez Querol", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "55030778N", "municipio": "Palma", "tutor": "INGRID QUEROL GARCIA", "email": "ingridquerol14061974@gmail.com", "direccion": "Carrer aragon Número 32 piso 4 b"}, {"id": 93, "nombre": "Alejandro Manuel Sánchez Cánovas", "categoria": "", "estado": "activo", "anioNacimiento": 2011, "dni": "55086042F", "municipio": "PALMA DE MALLORCA", "tutor": "ANTONIA CANOVAS COSTA", "email": "antoniacanovascosta@gmail.com", "direccion": "PASAJE EBRO NUMERO 2, 2º2ª"}, {"id": 94, "nombre": "Manuel Sanchez Feliu", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "54631679D", "municipio": "Palma", "tutor": "Manuel Sánchez Araujo", "email": "manusanchez668@gmail.com", "direccion": "Calle Aragon 178 -4C CP 07008"}, {"id": 95, "nombre": "Pau Serra Alaminos", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "43476524S", "municipio": "Palma", "tutor": "", "email": "pserraalaminos@gmail.com", "direccion": "Camí de la Vileta 149"}, {"id": 96, "nombre": "Alberto Serra Alaminos", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "43476522J", "municipio": "Palma", "tutor": "", "email": "aserraalaminos@gmail.com", "direccion": "Camino de la Vileta 149"}, {"id": 97, "nombre": "Ilan Taleb", "categoria": "", "estado": "activo", "anioNacimiento": 2015, "dni": "GC7980316", "municipio": "Palma de mallorca", "tutor": "Yasmine AMRY", "email": "yasmineamry@hotmail.com", "direccion": "Calle Almadra 11 son vida, 07013 palma de Mal"}, {"id": 98, "nombre": "Pau Tatay Insa", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49919499T", "municipio": "Palma", "tutor": "Silvia Insa Llopis", "email": "silviainsa@gmail.com", "direccion": "Gardenia, 9. 1°"}, {"id": 99, "nombre": "Sofía Valle Gómez", "categoria": "", "estado": "activo", "anioNacimiento": 1987, "dni": "43150307F", "municipio": "Palma", "tutor": "", "email": "svalleg87@gmail.com", "direccion": "C/Joan estelrich artigues, 56"}, {"id": 100, "nombre": "Álvaro Vallespir Homar", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49865004S", "municipio": "Palma de Mallorca", "tutor": "Marta Homar Martorell", "email": "marta.homar@hotmail.com", "direccion": "Carretera Buñola a Santa Maria km5 buzón 249"}, {"id": 101, "nombre": "Mateo Ventayol Carrasco", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49777177W", "municipio": "PALMA", "tutor": "CAROLINA CARRASCO MARTÍ", "email": "mcarolcarrasco@gmail.com", "direccion": "CAMINO DE GENOVA, 45, 1ºB"}, {"id": 102, "nombre": "Simon Ventayol Carrasco", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49777178A", "municipio": "Palma", "tutor": "CAROLINA CARRASCO MARTÍ", "email": "mcarolcarrasco@gmail.com", "direccion": "CAMINO DE GENOVA, 45, 1ºB"}, {"id": 103, "nombre": "Aksel Vidal Melenec", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "52034673W", "municipio": "BINISSALEM", "tutor": "ANTONIO VIDSL BORRAS", "email": "tonivb73@gmail.com", "direccion": "Pare payeres 1. 1-B (07350) BINISSALEM"}, {"id": 104, "nombre": "Dariy Vintskovskyy Carrasco", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49868984Q", "municipio": "PALMA", "tutor": "ELISABET CARRASCO CARRASCO", "email": "toniet777@gmail.com", "direccion": "C/Castillejos 0027 ent"}, {"id": 105, "nombre": "Jose Manuel De La Sotilla Vila", "categoria": "", "estado": "activo", "anioNacimiento": 1979, "dni": "43128635R", "municipio": "Palma", "tutor": "", "email": "josesotilla@gmail.com", "direccion": "C/Murcia, 44"}, {"id": 106, "nombre": "Daniel Nicolau Diago", "categoria": "", "estado": "activo", "anioNacimiento": 1978, "dni": "43117707K", "municipio": "Palma", "tutor": "", "email": "dnicolaudiago@gmail.com", "direccion": "Dionis Bennassar 30"}, {"id": 107, "nombre": "Ander Luis Merino", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "55232336K", "municipio": "Palma de Mallorca", "tutor": "Marco Antonio Luis Santos", "email": "veronicamerinogarcia@yahoo.es", "direccion": "Carrer Ciutat de la Plata, 1, Torre A, 6°A, 07006 P"}, {"id": 108, "nombre": "Carlos Pelayo Mesquida Payeras", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49772216D", "municipio": "Palma de Mallorca", "tutor": "Maria Inmaculada Payeras Piña", "email": "inmaculadapayeras3@gmail.com", "direccion": "Son Ferragut, 9-3°"}, {"id": 109, "nombre": "Marc Moya Tugores", "categoria": "", "estado": "activo", "anioNacimiento": 2017, "dni": "41713811E", "municipio": "Palma", "tutor": "Margarita Tugores Tugores", "email": "margatugorestugores@gmail.com", "direccion": "Calle Cala Petita 8 Palma"}, {"id": 110, "nombre": "Alex Blanco Zak", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "21090707Y", "municipio": "21090707Y", "tutor": "Magdalena Anna, Zak", "email": "magdalenazak1983@gmail.com", "direccion": "Carretera De Llorito24,1B 07510 Sineu"}, {"id": 111, "nombre": "Asier Lopez Jarque", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 112, "nombre": "Miriam Rengifo Cano", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 113, "nombre": "Javier Garcia Cebrian", "categoria": "Junior", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 114, "nombre": "Cristian Enriquez", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 115, "nombre": "Sergi Martinez Cajide", "categoria": "Absoluto", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 116, "nombre": "Toni Perez", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 117, "nombre": "Jaume Planisi Garcia", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 118, "nombre": "Roc Valentino", "categoria": "Alevín", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 119, "nombre": "Alek Serra Ranta", "categoria": "Absoluto", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 120, "nombre": "Jamue Solivellas", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 121, "nombre": "Pere Frontera", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}, {"id": 122, "nombre": "Pau Moronez", "categoria": "", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "direccion": ""}];
+const ATLETAS_SEED = [{"id": 1, "nombre": "Josep Aguilella Mondejar", "categoria": "", "estado": "activo", "anioNacimiento": 1996, "dni": "78718928W", "municipio": "Madrid", "tutor": "", "email": "aguilella.pep@gmail.com", "fechaNacimiento": "16/04/1996"}, {"id": 2, "nombre": "Lucas Agulló Vergara", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "74442126G", "municipio": "llucmajor", "tutor": "", "email": "lucas.av.wp@gmail.com", "fechaNacimiento": "09/03/2006"}, {"id": 3, "nombre": "William Alarcón Mátev", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "41711884G", "municipio": "Palma", "tutor": "Rubén Alarcón Bover", "email": "rubenalarconbover@gmail.com", "fechaNacimiento": "31/01/2015"}, {"id": 4, "nombre": "Felipe Simon Alfonso", "categoria": "", "estado": "activo", "anioNacimiento": 1997, "dni": "YA9691344", "municipio": "Palma", "tutor": "", "email": "felipe.alfonso4897@gmail.com", "fechaNacimiento": "04/08/1997"}, {"id": 5, "nombre": "Julio Ballesteros Martinez", "categoria": "", "estado": "activo", "anioNacimiento": 1978, "dni": "43127175J", "municipio": "Marratxí", "tutor": "", "email": "julioballesterosmartinez@gmail.com", "fechaNacimiento": "04/12/1978"}, {"id": 6, "nombre": "Pau Ballesteros Sastre", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "54627827K", "municipio": "Marratxí", "tutor": "Julio Ballesteros Sastre", "email": "julioballesterosmartinez@gmail.com", "fechaNacimiento": "26/04/2013"}, {"id": 7, "nombre": "Kyron Barbieri Carecho", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2009, "dni": "Y4990635v", "municipio": "Fornalutx", "tutor": "Daniela Barbieri", "email": "danibarbi@hotmail.com", "fechaNacimiento": "03/07/2009"}, {"id": 8, "nombre": "Marc Barceló Núñez", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "55087505k", "municipio": "Palma", "tutor": "Gisela Núñez", "email": "violeta.gn@hotmail.com", "fechaNacimiento": "04/01/2014"}, {"id": 9, "nombre": "Biel Bas", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45614896P", "municipio": "Marratxí", "tutor": "Climent Megías Gutíerrez", "email": "sonalegre@nodo50.org", "fechaNacimiento": "10/10/2008"}, {"id": 10, "nombre": "Emilio Bautista Armiñana", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "02740195K", "municipio": "Palma de Mallorca", "tutor": "", "email": "emilio10barmi@gmail.com", "fechaNacimiento": "22/05/2006"}, {"id": 11, "nombre": "Mateu Bennasar Vidal", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "41662764N", "municipio": "Palma", "tutor": "Beatriz vidal Torrens", "email": "bea@marasesoria.com", "fechaNacimiento": "21/03/2011"}, {"id": 12, "nombre": "Pablo Cabrera Lagartera", "categoria": "", "estado": "activo", "anioNacimiento": 2010, "dni": "49606547D", "municipio": "PALMA", "tutor": "MARIA LUISA LAGARTERA RODRÍGUEZ", "email": "maguylr@gmail.com", "fechaNacimiento": "15/06/2010"}, {"id": 13, "nombre": "Jaume Campins Busquets", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45691628N", "municipio": "Fornalutx", "tutor": "Margarita Busquets Bisbal", "email": "margatuna@hotmail.com", "fechaNacimiento": "10/04/2008"}, {"id": 14, "nombre": "Margarita Carolina Carrasco Martí", "categoria": "", "estado": "activo", "anioNacimiento": 1971, "dni": "41737927B", "municipio": "Palma", "tutor": "", "email": "mcarolcarrasco@gmail.com", "fechaNacimiento": "02/01/1971"}, {"id": 15, "nombre": "Daniel Chica Gonzalez", "categoria": "", "estado": "activo", "anioNacimiento": 2013, "dni": "49864995Y", "municipio": "Palma", "tutor": "Monica Gonzalez Reina", "email": "moni1206@gmail.com", "fechaNacimiento": "11/09/2013"}, {"id": 16, "nombre": "Alberto José Comas Riutort", "categoria": "", "estado": "activo", "anioNacimiento": 1983, "dni": "43116074k", "municipio": "Palma", "tutor": "", "email": "alcomasriu@gmail.com", "fechaNacimiento": "31/05/1983"}, {"id": 17, "nombre": "Javier Correa Villalonga", "categoria": "", "estado": "activo", "anioNacimiento": 1999, "dni": "43466411E", "municipio": "Marratxí", "tutor": "", "email": "xaviercorreavillalonga@gmail.com", "fechaNacimiento": "15/09/1999"}, {"id": 18, "nombre": "Pablo Correa Villalonga", "categoria": "", "estado": "activo", "anioNacimiento": 2001, "dni": "43466409C", "municipio": "Marratxí", "tutor": "", "email": "pablocorreavillalonga@gmail.com", "fechaNacimiento": "11/01/2001"}, {"id": 19, "nombre": "Iker Crespí Frías", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "49926405Y", "municipio": "Palma", "tutor": "Jaime Crespí Tous", "email": "j21781@hotmail.com", "fechaNacimiento": "08/10/2010"}, {"id": 20, "nombre": "Bruno Cruz Martin", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "55314460N", "municipio": "Rivas-Vaciamadrid", "tutor": "", "email": "brunocovivar@gmail.com", "fechaNacimiento": "06/12/2006"}, {"id": 21, "nombre": "Víctor Cuesta Soler", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "46432595B", "municipio": "Palma", "tutor": "Ana Maria Soler Rodríguez", "email": "anasoler75@gmail.com", "fechaNacimiento": "11/06/2012"}, {"id": 22, "nombre": "Joan De Juan Calafell", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49611021K", "municipio": "MARRATXI", "tutor": "MARIA ANTÒNIA CALAFELL CLADERA", "email": "macalafell@conselldemallorca.net", "fechaNacimiento": "22/07/2011"}, {"id": 23, "nombre": "Mario Dzidzanovic Marinkovic", "categoria": "", "estado": "activo", "anioNacimiento": 2000, "dni": "43220718S", "municipio": "Soller", "tutor": "", "email": "mariodzidzanovic@gmail.com", "fechaNacimiento": "10/02/2000"}, {"id": 24, "nombre": "Ariel Eder", "categoria": "", "estado": "activo", "anioNacimiento": 1985, "dni": "55749238K", "municipio": "Alaró", "tutor": "", "email": "ederep@gmail.com", "fechaNacimiento": "17/01/1985"}, {"id": 25, "nombre": "León Eder Ramirez", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2017, "dni": "54875769T", "municipio": "Alaró", "tutor": "Ariel Eder", "email": "ederep@gmail.com", "fechaNacimiento": "16/03/2017"}, {"id": 26, "nombre": "David Elias De Quirós Oliver", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "49483474D", "municipio": "Palma De Mallorca", "tutor": "", "email": "david.eliasoliver@gmail.com", "fechaNacimiento": "29/09/2005"}, {"id": 27, "nombre": "Sergio Enjuto Mendez", "categoria": "", "estado": "activo", "anioNacimiento": 1980, "dni": "09342575K", "municipio": "Palma de mallorca", "tutor": "", "email": "sergioenjuto@gmail.com", "fechaNacimiento": "01/01/1980"}, {"id": 28, "nombre": "Sergi Enjuto Vidal", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49776505C", "municipio": "Palma de Mallorca", "tutor": "Sergio Enjuto Mendez", "email": "sergioenjuto@gmail.com", "fechaNacimiento": "26/02/2013"}, {"id": 29, "nombre": "Sofía Antonia Fenger", "categoria": "", "estado": "activo", "anioNacimiento": 2015, "dni": "Y6844965H", "municipio": "Marratxi", "tutor": "Michal Fenger", "email": "eltorofenger@gmail.com", "fechaNacimiento": "24/02/2015"}, {"id": 30, "nombre": "Diego Galiana Fuster", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49866933N", "municipio": "LLOSETA", "tutor": "ANTONIA FUSTER CANTALLOPS", "email": "duende-cilla@hotmail.com", "fechaNacimiento": "20/12/2011"}, {"id": 31, "nombre": "Mark Garau Trautmann", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "52031942P", "municipio": "Palma de Mallorca", "tutor": "Enrique Garau Perez", "email": "mrkeeke@gmail.com", "fechaNacimiento": "03/04/2014"}, {"id": 32, "nombre": "Manuel Garcia Borsani", "categoria": "", "estado": "activo", "anioNacimiento": 1999, "dni": "45371300M", "municipio": "Palma de Mallorca", "tutor": "", "email": "elmanu001.mgb@gmail.com", "fechaNacimiento": "31/07/1999"}, {"id": 33, "nombre": "Xavi García Oton", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "54876165M", "municipio": "Marratxi", "tutor": "José Javier García Romero", "email": "soyjavi79@gmail.com", "fechaNacimiento": "28/04/2016"}, {"id": 34, "nombre": "Kamal Garcia Serroukh", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49772215P", "municipio": "MARRATXI", "tutor": "ALVARO GARCIA COLALDO", "email": "walker.agc@gmail.com", "fechaNacimiento": "15/08/2012"}, {"id": 35, "nombre": "Ismael Garcia Serroukh", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45186571N", "municipio": "MARRATXI", "tutor": "ALVARO GARCIA COLLADO", "email": "walker.agc@gmail.com", "fechaNacimiento": "03/06/2008"}, {"id": 36, "nombre": "Jaime Gener Zulla", "categoria": "", "estado": "activo", "anioNacimiento": 1991, "dni": "41744804B", "municipio": "Ciutadella", "tutor": "", "email": "generzulla@gmail.com", "fechaNacimiento": "28/08/1991"}, {"id": 37, "nombre": "Aaron Gomez Petro", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "54871555H", "municipio": "Marratxi", "tutor": "Óscar Gómez Herreros", "email": "ogomher@gmail.com", "fechaNacimiento": "12/05/2016"}, {"id": 38, "nombre": "Agustin Alberto González Peña", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "55234238Z", "municipio": "PALMA DE MALLORCA", "tutor": "AGUSTIN GONZÁLEZ SÁNCHEZ", "email": "jennipherp@hotmail.com", "fechaNacimiento": "14/01/2011"}, {"id": 39, "nombre": "Agustín Gilberto González Sánchez", "categoria": "", "estado": "activo", "anioNacimiento": 1973, "dni": "44731777C", "municipio": "PALMA", "tutor": "", "email": "agustin010@hotmail.com", "fechaNacimiento": "10/02/1973"}, {"id": 40, "nombre": "Rubén Guerrero Dominguis", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "54875028H", "municipio": "Marratxi", "tutor": "Abraham Guerrero Suárez", "email": "aguerrero008@gmail.com", "fechaNacimiento": "31/01/2013"}, {"id": 41, "nombre": "Maria Pilar Jurado Núñez", "categoria": "", "estado": "activo", "anioNacimiento": 1977, "dni": "01931391N", "municipio": "PALMA", "tutor": "", "email": "pilujn@hotmail.com", "fechaNacimiento": "26/08/1977"}, {"id": 42, "nombre": "Antoni Maria Llauradó Estrany", "categoria": "", "estado": "activo", "anioNacimiento": 1997, "dni": "43225972W", "municipio": "Ciutat", "tutor": "", "email": "ninguno@gmail.com", "fechaNacimiento": "24/10/1997"}, {"id": 43, "nombre": "José Rafael López Cancio Ariztoy", "categoria": "", "estado": "activo", "anioNacimiento": 1990, "dni": "43194943t", "municipio": "Palma", "tutor": "", "email": "rlcancio5@gmail.com", "fechaNacimiento": "25/01/1990"}, {"id": 44, "nombre": "Martín López Jarque", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49868659J", "municipio": "MARRATXI", "tutor": "ÁNGEL LÓPEZ BAYARRI", "email": "bayarri82@hotmail.com", "fechaNacimiento": "27/12/2013"}, {"id": 45, "nombre": "Hugo Lopez Muñoz", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "54622160N", "municipio": "Palma", "tutor": "Verónica Muñoz", "email": "Vero_nik_9@hotmail.com", "fechaNacimiento": "03/05/2013"}, {"id": 46, "nombre": "Adrián Lugo Portillo", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2009, "dni": "49605965W", "municipio": "Palma de Mallorca", "tutor": "Juan Jose Lugo Reina", "email": "juanjoselugo25@hotmail.com", "fechaNacimiento": "19/09/2009"}, {"id": 47, "nombre": "Markel Luis Merino", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "49928365B", "municipio": "PALMA DE MALLORCA", "tutor": "MARCO ANTONIO LUIS SANTOS", "email": "marco.aluis@hotmail.com", "fechaNacimiento": "08/10/2014"}, {"id": 48, "nombre": "Juan Lumbreras Coca", "categoria": "", "estado": "activo", "anioNacimiento": 1977, "dni": "43104961V", "municipio": "Palma de Mallorca", "tutor": "", "email": "juan.lumbreras@gmail.com", "fechaNacimiento": "09/04/1977"}, {"id": 49, "nombre": "Jon Lumbreras Rojo", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49614533Z", "municipio": "Palma de Mallorca", "tutor": "Juan Lumbreras Coca", "email": "juan.lumbreras@gmail.com", "fechaNacimiento": "18/07/2011"}, {"id": 50, "nombre": "Leyre Lumbreras Rojo", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "46389239X", "municipio": "Palma de Mallorca", "tutor": "", "email": "leyre.lumbreras@gmail.com", "fechaNacimiento": "04/10/2006"}, {"id": 51, "nombre": "Pablo Luna Ramón", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "03234337P", "municipio": "Palma", "tutor": "JUAN LUNA BALAIRÓN", "email": "jlunbal@gmail.com", "fechaNacimiento": "18/04/2014"}, {"id": 52, "nombre": "Lluc David Mengual Fuster", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45189081S", "municipio": "Palma", "tutor": "David Mengual Alsina", "email": "damenal2@gmail.com", "fechaNacimiento": "15/01/2008"}, {"id": 53, "nombre": "Pol Mengual Fuster", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "43469622J", "municipio": "Palma", "tutor": "", "email": "pmengualfuster@gmail.com", "fechaNacimiento": "26/07/2005"}, {"id": 54, "nombre": "Cesc Molina Ducros", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "45370842F", "municipio": "Palma", "tutor": "", "email": "molinacesc4@gmail.com", "fechaNacimiento": "25/09/2006"}, {"id": 55, "nombre": "Francisco Molina Fresneda", "categoria": "", "estado": "activo", "anioNacimiento": 1973, "dni": "34068487j", "municipio": "Marratxí", "tutor": "", "email": "xiscko@gmail.com", "fechaNacimiento": "23/03/1973"}, {"id": 56, "nombre": "José Jaice Mora Mailey", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49779935T", "municipio": "Palma de Mallorca", "tutor": "Louise Mailey", "email": "bluebells6606@gmail.com", "fechaNacimiento": "11/02/2012"}, {"id": 57, "nombre": "Carlos Morlá Forteza", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "52030541x", "municipio": "Palma", "tutor": "Marta Forteza Guanter", "email": "mafortezag@gmail.com", "fechaNacimiento": "28/11/2010"}, {"id": 58, "nombre": "Pedro Gabriel Morlä Murillo", "categoria": "", "estado": "activo", "anioNacimiento": 1976, "dni": "44325918L", "municipio": "PALMA DE MALLORCA", "tutor": "", "email": "pmorla@gmail.com", "fechaNacimiento": "30/05/1976"}, {"id": 59, "nombre": "Bohdan Motyl", "categoria": "", "estado": "activo", "anioNacimiento": 2004, "dni": "Z1387478P", "municipio": "Palma", "tutor": "", "email": "bohdanmot99@gmail.com", "fechaNacimiento": "15/04/2004"}, {"id": 60, "nombre": "Jacinto Manuel Moya Díaz", "categoria": "", "estado": "activo", "anioNacimiento": 1982, "dni": "46957220Y", "municipio": "FORMENTERA", "tutor": "", "email": "jacinto.moya@gmail.com", "fechaNacimiento": "04/06/1982"}, {"id": 61, "nombre": "Pau Moya Tugores", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "49927753C", "municipio": "PALMA", "tutor": "JACINTO MOYA DÍAZ", "email": "jacinto.moya@gmail.com", "fechaNacimiento": "31/10/2014"}, {"id": 62, "nombre": "Tomeu Mudoy Morales", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "30854690Y", "municipio": "Palma", "tutor": "Marta morales", "email": "martalmorales87@gmail.com", "fechaNacimiento": "09/11/2016"}, {"id": 63, "nombre": "Aníbal Muñíz Marín", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2014, "dni": "49924871J", "municipio": "Palma", "tutor": "Yolanda Marín Rodríguez de Tembleque", "email": "yolandamrdt@gmail.com", "fechaNacimiento": "09/06/2014"}, {"id": 64, "nombre": "Marc Nicolás Buele", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "49605183w", "municipio": "Llucmajor", "tutor": "Silvia Buele Zamora", "email": "silbuele@gmail.com", "fechaNacimiento": "29/08/2010"}, {"id": 65, "nombre": "Marta Nicolás Buele", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "52034481v", "municipio": "Llucmajor", "tutor": "Silvia Buele Zamora", "email": "silbuele@gmail.com", "fechaNacimiento": "30/03/2015"}, {"id": 66, "nombre": "Yago Ojea Arana", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "43479964M", "municipio": "Palma de Mallorca (Son Rapinya)", "tutor": "Alicia Arana Andrade", "email": "ojea.arana@hotmail.com", "fechaNacimiento": "22/01/2008"}, {"id": 67, "nombre": "Luis Manuel Paniagua Leal", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49773281Q", "municipio": "PALMA", "tutor": "ALEJANDRO PANIAGUA REDONDO", "email": "alejandroprd1@gmail.com", "fechaNacimiento": "25/10/2012"}, {"id": 68, "nombre": "Sergio Parrilla Garcia", "categoria": "", "estado": "activo", "anioNacimiento": 1983, "dni": "43122867Y", "municipio": "Palma", "tutor": "", "email": "sergiowp_1_@hotmail.com", "fechaNacimiento": "25/08/1983"}, {"id": 69, "nombre": "Andreu Pascual", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "11200135D", "municipio": "Palma", "tutor": "Marga Puig Salva", "email": "marga.p.s.palma1@gmail.com", "fechaNacimiento": "16/12/2015"}, {"id": 70, "nombre": "Jaime Pascual Tudela", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "45694812E", "municipio": "Palma", "tutor": "José Luis Pascual Ripoll", "email": "jlpascual@cograsova.es", "fechaNacimiento": "30/10/2025"}, {"id": 71, "nombre": "Carlos Payeras Biayna", "categoria": "", "estado": "activo", "anioNacimiento": 1991, "dni": "43175818B", "municipio": "Palma", "tutor": "", "email": "payeras_swim1991@hotmail.com", "fechaNacimiento": "12/05/1991"}, {"id": 72, "nombre": "David Picó Torrejón", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2008, "dni": "46393659Z", "municipio": "Palma", "tutor": "Sebastián Picó Benasar", "email": "adipico@gmail.com", "fechaNacimiento": "28/03/2008"}, {"id": 73, "nombre": "Héctor Picó Torrejón", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49924299Q", "municipio": "Palma", "tutor": "Sebastià Picó Bennasar", "email": "adipico@gmail.com", "fechaNacimiento": "18/01/2011"}, {"id": 74, "nombre": "Luis Planisi Del Valle", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "55238804A", "municipio": "Palma de mallorca", "tutor": "Tomeu Planisi Garcia", "email": "tomeuplanisi@gmail.com", "fechaNacimiento": "18/08/2015"}, {"id": 75, "nombre": "Francisco Gabriel Pons Beltrán", "categoria": "", "estado": "activo", "anioNacimiento": 1981, "dni": "43150001t", "municipio": "Palma", "tutor": "", "email": "fotofg91@gmail.com", "fechaNacimiento": "03/12/1981"}, {"id": 76, "nombre": "Hugo Pons Valent", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "4238954V", "municipio": "palma", "tutor": "Francisco Gabriel Pon Beltran", "email": "franciscopons91@gmail.com", "fechaNacimiento": "03/06/2010"}, {"id": 77, "nombre": "Iris Pons Valent", "categoria": "", "estado": "activo", "anioNacimiento": 2006, "dni": "41713280N", "municipio": "Palma", "tutor": "", "email": "franciscopons91@gmail.com", "fechaNacimiento": "07/12/2006"}, {"id": 78, "nombre": "Noé Pregal Yern", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49608348Q", "municipio": "Palma", "tutor": "Margarita Yern Pomar", "email": "margapiano@hotmail.com", "fechaNacimiento": "08/08/2011"}, {"id": 79, "nombre": "Hugo Rada Rodríguez", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "46275325S", "municipio": "Marratxí", "tutor": "", "email": "hrada2005@gmail.com", "fechaNacimiento": "17/03/2005"}, {"id": 80, "nombre": "Pau Ramonell Oliver", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "46392222A", "municipio": "Palma", "tutor": "Antoni Ramonell Alzamora", "email": "aramonell@yahoo.es", "fechaNacimiento": "12/02/2010"}, {"id": 81, "nombre": "Bosco Ramos Juaneda", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49928956G", "municipio": "Marratxi", "tutor": "Azahara Juaneda Sánchez", "email": "azaharajs@hotmail.com", "fechaNacimiento": "17/11/2013"}, {"id": 82, "nombre": "Pedro Ratto Antich", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49866760T", "municipio": "Palma", "tutor": "Gerardo Ratto Sosa-Díaz", "email": "gerardo.ratto@protonmail.com", "fechaNacimiento": "24/06/2012"}, {"id": 83, "nombre": "Aleix Rauba Mulet", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "41695997X", "municipio": "PALMA DE MALLORCA", "tutor": "MARÍA JOSÉ MULET SEGUÍ", "email": "mjmuletsegui@hotmail.es", "fechaNacimiento": "04/04/2013"}, {"id": 84, "nombre": "Ivan Real Coca", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2010, "dni": "52031644D", "municipio": "PALMA", "tutor": "", "email": "cocareal@hotmail.es", "fechaNacimiento": "04/10/2010"}, {"id": 85, "nombre": "Joana Maria Riera Darder", "categoria": "", "estado": "activo", "anioNacimiento": 1980, "dni": "43079754H", "municipio": "Muro", "tutor": "", "email": "joanamaria5@gmail.com", "fechaNacimiento": "06/12/1980"}, {"id": 86, "nombre": "Lluc Roca López", "categoria": "Junior", "estado": "activo", "anioNacimiento": 2009, "dni": "45694560T", "municipio": "PALMA", "tutor": "M Rosa López García-Soto", "email": "mrosalgs@gmail.com", "fechaNacimiento": "21/04/2009"}, {"id": 87, "nombre": "Angel Gabriel Rojas Borges", "categoria": "", "estado": "activo", "anioNacimiento": 1994, "dni": "60991417V", "municipio": "PALMA", "tutor": "", "email": "angelrwp7@gmail.com", "fechaNacimiento": "25/08/1994"}, {"id": 88, "nombre": "Sergio Rosas López", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49865468L", "municipio": "Palma", "tutor": "Maria Ángeles López López", "email": "marianlopez74@hotmail.com", "fechaNacimiento": "24/06/2013"}, {"id": 89, "nombre": "Joan Arnau Rosselló Galmés", "categoria": "", "estado": "activo", "anioNacimiento": 1989, "dni": "43185035M", "municipio": "PALMA", "tutor": "", "email": "arnaurossello@gmail.com", "fechaNacimiento": "20/01/1989"}, {"id": 90, "nombre": "Rubén Ruano Tudela", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "52034050T", "municipio": "Marratxi", "tutor": "Carlota Tudela Hermua", "email": "carlotatudela75@gmail.com", "fechaNacimiento": "13/08/2012"}, {"id": 91, "nombre": "Francesco Andreu Salvatore Pichs", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "60924057R", "municipio": "Palma", "tutor": "Edoardo Salvatore", "email": "rishkids@icloud.com", "fechaNacimiento": "01/09/2013"}, {"id": 92, "nombre": "Aleix Sánchez Querol", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "55030778N", "municipio": "Palma", "tutor": "INGRID QUEROL GARCIA", "email": "ingridquerol14061974@gmail.com", "fechaNacimiento": "12/03/2013"}, {"id": 93, "nombre": "Alejandro Manuel Sánchez Cánovas", "categoria": "", "estado": "activo", "anioNacimiento": 2011, "dni": "55086042F", "municipio": "PALMA DE MALLORCA", "tutor": "ANTONIA CANOVAS COSTA", "email": "antoniacanovascosta@gmail.com", "fechaNacimiento": "27/10/2011"}, {"id": 94, "nombre": "Manuel Sanchez Feliu", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "54631679D", "municipio": "Palma", "tutor": "Manuel Sánchez Araujo", "email": "manusanchez668@gmail.com", "fechaNacimiento": "12/07/2016"}, {"id": 95, "nombre": "Pau Serra Alaminos", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "43476524S", "municipio": "Palma", "tutor": "", "email": "pserraalaminos@gmail.com", "fechaNacimiento": "31/03/2005"}, {"id": 96, "nombre": "Alberto Serra Alaminos", "categoria": "", "estado": "activo", "anioNacimiento": 2005, "dni": "43476522J", "municipio": "Palma", "tutor": "", "email": "aserraalaminos@gmail.com", "fechaNacimiento": "31/03/2005"}, {"id": 97, "nombre": "Ilan Taleb", "categoria": "", "estado": "activo", "anioNacimiento": 2015, "dni": "GC7980316", "municipio": "Palma de mallorca", "tutor": "Yasmine AMRY", "email": "yasmineamry@hotmail.com", "fechaNacimiento": "16/06/2015"}, {"id": 98, "nombre": "Pau Tatay Insa", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49919499T", "municipio": "Palma", "tutor": "Silvia Insa Llopis", "email": "silviainsa@gmail.com", "fechaNacimiento": "16/11/2013"}, {"id": 99, "nombre": "Sofía Valle Gómez", "categoria": "", "estado": "activo", "anioNacimiento": 1987, "dni": "43150307F", "municipio": "Palma", "tutor": "", "email": "svalleg87@gmail.com", "fechaNacimiento": "04/07/1987"}, {"id": 100, "nombre": "Álvaro Vallespir Homar", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49865004S", "municipio": "Palma de Mallorca", "tutor": "Marta Homar Martorell", "email": "marta.homar@hotmail.com", "fechaNacimiento": "10/06/2013"}, {"id": 101, "nombre": "Mateo Ventayol Carrasco", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49777177W", "municipio": "PALMA", "tutor": "CAROLINA CARRASCO MARTÍ", "email": "mcarolcarrasco@gmail.com", "fechaNacimiento": "07/03/2011"}, {"id": 102, "nombre": "Simon Ventayol Carrasco", "categoria": "Cadete", "estado": "activo", "anioNacimiento": 2011, "dni": "49777178A", "municipio": "Palma", "tutor": "CAROLINA CARRASCO MARTÍ", "email": "mcarolcarrasco@gmail.com", "fechaNacimiento": "07/03/2011"}, {"id": 103, "nombre": "Aksel Vidal Melenec", "categoria": "Alevín", "estado": "activo", "anioNacimiento": 2015, "dni": "52034673W", "municipio": "BINISSALEM", "tutor": "ANTONIO VIDSL BORRAS", "email": "tonivb73@gmail.com", "fechaNacimiento": "31/01/2015"}, {"id": 104, "nombre": "Dariy Vintskovskyy Carrasco", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2013, "dni": "49868984Q", "municipio": "PALMA", "tutor": "ELISABET CARRASCO CARRASCO", "email": "toniet777@gmail.com", "fechaNacimiento": "29/10/2013"}, {"id": 105, "nombre": "Jose Manuel De La Sotilla Vila", "categoria": "", "estado": "activo", "anioNacimiento": 1979, "dni": "43128635R", "municipio": "Palma", "tutor": "", "email": "josesotilla@gmail.com", "fechaNacimiento": "26/01/1979"}, {"id": 106, "nombre": "Daniel Nicolau Diago", "categoria": "", "estado": "activo", "anioNacimiento": 1978, "dni": "43117707K", "municipio": "Palma", "tutor": "", "email": "dnicolaudiago@gmail.com", "fechaNacimiento": "27/12/1978"}, {"id": 107, "nombre": "Ander Luis Merino", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": 2016, "dni": "55232336K", "municipio": "Palma de Mallorca", "tutor": "Marco Antonio Luis Santos", "email": "veronicamerinogarcia@yahoo.es", "fechaNacimiento": "05/11/2016"}, {"id": 108, "nombre": "Carlos Pelayo Mesquida Payeras", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "49772216D", "municipio": "Palma de Mallorca", "tutor": "Maria Inmaculada Payeras Piña", "email": "inmaculadapayeras3@gmail.com", "fechaNacimiento": "23/07/2012"}, {"id": 109, "nombre": "Marc Moya Tugores", "categoria": "", "estado": "activo", "anioNacimiento": 2017, "dni": "41713811E", "municipio": "Palma", "tutor": "Margarita Tugores Tugores", "email": "margatugorestugores@gmail.com", "fechaNacimiento": "05/05/2017"}, {"id": 110, "nombre": "Alex Blanco Zak", "categoria": "Infantil", "estado": "activo", "anioNacimiento": 2012, "dni": "21090707Y", "municipio": "21090707Y", "tutor": "Magdalena Anna, Zak", "email": "magdalenazak1983@gmail.com", "fechaNacimiento": "17/08/2012"}, {"id": 111, "nombre": "Asier Lopez Jarque", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 112, "nombre": "Miriam Rengifo Cano", "categoria": "Benjamín", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 113, "nombre": "Javier Garcia Cebrian", "categoria": "Junior", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 114, "nombre": "Cristian Enriquez", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 115, "nombre": "Sergi Martinez Cajide", "categoria": "Absoluto", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 116, "nombre": "Toni Perez", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 117, "nombre": "Jaume Planisi Garcia", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 118, "nombre": "Roc Valentino", "categoria": "Alevín", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 119, "nombre": "Alek Serra Ranta", "categoria": "Absoluto", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 120, "nombre": "Jamue Solivellas", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 121, "nombre": "Pere Frontera", "categoria": "Masters", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}, {"id": 122, "nombre": "Pau Moronez", "categoria": "", "estado": "activo", "anioNacimiento": null, "dni": "", "municipio": "", "tutor": "", "email": "", "fechaNacimiento": ""}];
 const CATEGORIAS_FIJAS = ["Benjamín","Alevín","Infantil","Cadete","Junior","Absoluto","Absoluto A","Masters","Femenino"];
 
 const SK_ATL = 'wpa_atletas', SK_ENT = 'wpa_entrenadores', SK_REG = 'wpa_registros', SK_EQ = 'wpa_equipos',
       SK_ADMINPASS = 'wpa_adminpass', SK_SESION = 'wpa_sesion', SK_VER = 'wpa_ver', SK_TOKEN = 'wpa_synctoken',
       SK_PAG = 'wpa_pagos', SK_CAR = 'wpa_cargos', SK_CARPAG = 'wpa_cargopagos', SK_NEXTID_PAGOS = 'wpa_nextid_pagos',
       SK_INICIO_COBROS = 'wpa_inicio_cobros';
-const DATA_VERSION = '3-pagos-integrados';
+const DATA_VERSION = '5-atletas-unificado';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1327,6 +1225,8 @@ function load() {
       // primera vez (o versión nueva): cargamos el listado real de atletas del club
       const existentes = new Set(atletas.map(a => a.id));
       ATLETAS_SEED.forEach(a => { if (!existentes.has(a.id)) atletas.push({...a}); });
+      // Además, rellenamos datos de contacto que falten en atletas ya existentes.
+      parchearDatosContacto();
     }
     // Asegura que todo atleta tenga un estado válido y los campos de gestión de pagos (compatibilidad con datos antiguos)
     atletas.forEach(a => normalizarAtleta(a));
@@ -1354,6 +1254,7 @@ function load() {
 function normalizarAtleta(a) {
   if (a.estado !== 'activo' && a.estado !== 'baja') a.estado = 'activo';
   if (a.anioNacimiento === undefined) a.anioNacimiento = null;
+  if (a.fechaNacimiento === undefined) a.fechaNacimiento = '';
   if (a.dni === undefined) a.dni = '';
   if (a.email === undefined) a.email = '';
   if (a.tel === undefined) a.tel = '';
@@ -1363,7 +1264,6 @@ function normalizarAtleta(a) {
   if (a.paga === undefined) a.paga = true;
   if (a.municipio === undefined) a.municipio = '';
   if (a.tutor === undefined) a.tutor = '';
-  if (a.direccion === undefined) a.direccion = '';
   return a;
 }
 
@@ -1437,6 +1337,24 @@ function aplicarParchesAtletas() {
   const existentes = new Set(atletas.map(a => a.id));
   let cambios = false;
   ATLETAS_SEED.forEach(a => { if (!existentes.has(a.id)) { atletas.push(normalizarAtleta({...a})); cambios = true; } });
+  return cambios;
+}
+
+function parchearDatosContacto() {
+  // Rellena dni/municipio/tutor/email/fechaNacimiento en atletas que ya existían
+  // pero les faltan esos datos, sin pisar nada que el usuario ya haya rellenado.
+  const seedById = {};
+  ATLETAS_SEED.forEach(a => { seedById[a.id] = a; });
+  let cambios = false;
+  atletas.forEach(a => {
+    const s = seedById[a.id];
+    if (!s) return;
+    if (!a.dni && s.dni) { a.dni = s.dni; cambios = true; }
+    if (!a.municipio && s.municipio) { a.municipio = s.municipio; cambios = true; }
+    if (!a.tutor && s.tutor) { a.tutor = s.tutor; cambios = true; }
+    if (!a.email && s.email) { a.email = s.email; cambios = true; }
+    if (!a.fechaNacimiento && s.fechaNacimiento) { a.fechaNacimiento = s.fechaNacimiento; cambios = true; }
+  });
   return cambios;
 }
 
@@ -1537,6 +1455,7 @@ function onAuthenticated() {
   document.getElementById('nav-user-role').textContent = sesion.tipo === 'admin' ? 'Acceso total' : 'Entrenador/a';
   document.getElementById('nav-admin').style.display = sesion.tipo === 'admin' ? '' : 'none';
   document.getElementById('nav-atletas').style.display = sesion.tipo === 'admin' ? '' : 'none';
+  document.getElementById('nav-bajas').style.display = sesion.tipo === 'admin' ? '' : 'none';
   document.getElementById('nav-config').style.display = sesion.tipo === 'admin' ? '' : 'none';
   document.getElementById('nav-pagos').style.display = sesion.tipo === 'admin' ? '' : 'none';
   document.getElementById('nav-sync').style.display = sesion.tipo === 'admin' ? '' : 'none';
@@ -1609,9 +1528,17 @@ function openModal(id) {
   if (id === 'nuevo-atleta') {
     document.getElementById('na-titulo').textContent = 'Nuevo atleta';
     document.getElementById('na-nombre').value = '';
-    document.getElementById('na-anio').value = '';
+    document.getElementById('na-fnac').value = '';
     document.getElementById('na-id').value = '';
     document.getElementById('na-error').textContent = '';
+    document.getElementById('na-dni').value = '';
+    document.getElementById('na-cuota').value = 45;
+    document.getElementById('na-email').value = '';
+    document.getElementById('na-tel').value = '';
+    document.getElementById('na-municipio').value = '';
+    document.getElementById('na-tutor').value = '';
+    document.getElementById('na-notas').value = '';
+    document.getElementById('na-paga').checked = true;
     const sel = document.getElementById('na-categoria');
     sel.innerHTML = '<option value="">Sin categoría</option>' +
       CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
@@ -1639,18 +1566,6 @@ function openModal(id) {
     document.getElementById('ap-fecha').value = today;
     document.getElementById('ap-notas').value = '';
     document.getElementById('ap-estado').value = 'pagado';
-  }
-  if (id === 'add-atleta-pag') {
-    const sel = document.getElementById('nap-categoria');
-    if (sel) {
-      sel.innerHTML = '<option value="">Sin categoría</option>';
-      CATEGORIAS_FIJAS.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
-    }
-    ['nap-nombre','nap-dni','nap-email','nap-tel','nap-notas'].forEach(fid => { const el=document.getElementById(fid); if(el) el.value=''; });
-    const nc=document.getElementById('nap-cuota'); if(nc) nc.value=45;
-    const np=document.getElementById('nap-paga'); if(np) np.checked=true;
-    const na=document.getElementById('nap-anio'); if(na) na.value='';
-    const nerr=document.getElementById('nap-error'); if(nerr) nerr.textContent='';
   }
   if (id === 'gen-pagos') {
     const gm=document.getElementById('gp-mes'); if(gm) gm.value=mesActualStr();
@@ -1681,6 +1596,7 @@ function showTab(t, btn) {
   }
   if (t === 'admin') renderAdminEntrenadores();
   if (t === 'atletas-tab') { poblarFiltroCategoriaAtletas(); renderAdminAtletas(); }
+  if (t === 'bajas-tab') { document.getElementById('bajas-buscar').value = ''; renderBajasTab(); }
   if (t === 'config-tab') {
     const sel = document.getElementById('cfg-categoria-destino');
     sel.innerHTML = CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
@@ -1992,37 +1908,96 @@ function renderAdminAtletas() {
   if (filtroEstado) lista = lista.filter(a => a.estado === filtroEstado);
   if (filtroCat === '__sin__') lista = lista.filter(a => !a.categoria);
   else if (filtroCat) lista = lista.filter(a => a.categoria === filtroCat);
-  if (q) lista = lista.filter(a => a.nombre.toLowerCase().includes(q));
+  if (q) lista = lista.filter(a => a.nombre.toLowerCase().includes(q) || (a.dni||'').toLowerCase().includes(q) || (a.email||'').toLowerCase().includes(q) || (a.tel||'').includes(q));
   lista.sort((a,b) => a.nombre.localeCompare(b.nombre));
   const body = document.getElementById('body-admin-atletas');
-  if (lista.length === 0) { body.innerHTML = '<tr><td colspan="4"><div class="empty">No hay atletas que coincidan con este filtro.</div></td></tr>'; return; }
-  body.innerHTML = lista.map(a => `
+  if (lista.length === 0) { body.innerHTML = '<tr><td colspan="7"><div class="empty">No hay atletas que coincidan con este filtro.</div></td></tr>'; return; }
+  body.innerHTML = lista.map(a => {
+    const d = (typeof deudaAtleta === 'function' ? deudaAtleta(a.id) : 0) + (typeof deudaCargo === 'function' ? deudaCargo(a.id) : 0);
+    return `
     <tr>
       <td data-label="Atleta" class="no-label"><a href="javascript:void(0)" onclick="verFichaAtleta(${a.id})" style="color:var(--navy);font-weight:500;text-decoration:none;border-bottom:1px dotted var(--text-muted)">${esc(a.nombre)}</a></td>
       <td data-label="Categoría">
-        <select onchange="cambiarCategoriaAtleta(${a.id}, this.value)" style="min-width:160px" ${a.estado==='baja'?'disabled':''}>
+        <select onchange="cambiarCategoriaAtleta(${a.id}, this.value)" style="min-width:150px" ${a.estado==='baja'?'disabled':''}>
           <option value="">Sin categoría</option>
           ${CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}" ${a.categoria===c?'selected':''}>${esc(c)}</option>`).join('')}
         </select>
       </td>
+      <td data-label="Contacto" style="font-size:12px"><div>${esc(a.email||'—')}</div><div style="color:var(--text-muted)">${esc(a.tel||'')}</div></td>
       <td data-label="Estado">${a.estado === 'activo' ? '<span class="badge badge-ok">Activo</span>' : '<span class="badge badge-gray">De baja</span>'}</td>
+      <td data-label="Cuota">${a.paga===false ? '<span style="color:var(--text-muted);font-size:12px">Exento</span>' : (a.cuota||45)+'€/mes'}</td>
+      <td data-label="Deuda">${d>0?`<span style="color:var(--red);font-weight:600">${d}€</span>`:'<span style="color:var(--ok)">—</span>'}</td>
       <td data-label="Acciones" style="white-space:nowrap">
-        <button class="btn btn-sm btn-icon" onclick="editarAtleta(${a.id})" title="Editar nombre y categoría">✏️</button>
+        <button class="btn btn-sm btn-icon" onclick="editarAtleta(${a.id})" title="Editar">✏️</button>
         ${a.estado === 'activo'
           ? `<button class="btn btn-sm btn-danger" onclick="darBajaAtleta(${a.id})">Dar de baja</button>`
           : `<button class="btn btn-sm btn-success" onclick="reactivarAtleta(${a.id})">Reactivar</button>`}
         <button class="btn btn-sm btn-icon" onclick="eliminarAtletaPermanente(${a.id})" title="Eliminar permanentemente">🗑️</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
+}
+
+function renderBajasTab() {
+  if (!sesion || sesion.tipo !== 'admin') return;
+  const q = (document.getElementById('bajas-buscar').value || '').toLowerCase();
+  let lista = atletas.filter(a => a.estado === 'baja');
+  if (q) lista = lista.filter(a => a.nombre.toLowerCase().includes(q));
+  lista.sort((a,b) => a.nombre.localeCompare(b.nombre));
+  const body = document.getElementById('body-bajas');
+  if (lista.length === 0) { body.innerHTML = '<tr><td colspan="5"><div class="empty">No hay atletas dados de baja.</div></td></tr>'; return; }
+  body.innerHTML = lista.map(a => {
+    const d = (typeof deudaAtleta === 'function' ? deudaAtleta(a.id) : 0) + (typeof deudaCargo === 'function' ? deudaCargo(a.id) : 0);
+    return `
+    <tr>
+      <td data-label="Atleta" class="no-label" style="font-weight:500">${esc(a.nombre)}</td>
+      <td data-label="Categoría">${a.categoria ? esc(a.categoria) : '<span style="color:var(--text-muted);font-size:12px">Sin asignar</span>'}</td>
+      <td data-label="Contacto" style="font-size:12px"><div>${esc(a.email||'—')}</div><div style="color:var(--text-muted)">${esc(a.tel||'')}</div></td>
+      <td data-label="Deuda">${d>0?`<span style="color:var(--red);font-weight:600">${d}€</span>`:'—'}</td>
+      <td data-label="Acciones" style="white-space:nowrap">
+        <button class="btn btn-sm btn-success" onclick="reactivarAtleta(${a.id})">↩ Reactivar</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function verFichaAtleta(id) {
   const a = atletas.find(x => x.id === id);
   if (!a) return;
   document.getElementById('fa-nombre').textContent = a.nombre;
-  document.getElementById('fa-anio').textContent = a.anioNacimiento || 'No registrado';
-  document.getElementById('fa-categoria').textContent = a.categoria || 'Sin categoría asignada';
+  document.getElementById('fa-estado-badge').textContent = a.estado==='activo'?'Activo':'Baja';
+  document.getElementById('fa-estado-badge').className = 'badge ' + (a.estado==='activo'?'badge-ok':'badge-gray');
+  document.getElementById('fa-categoria-badge').textContent = a.categoria || 'Sin categoría';
+  document.getElementById('fa-cuota-badge').textContent = a.paga===false ? 'Exento' : (a.cuota||45)+'€/mes';
+  document.getElementById('fa-dni').textContent = a.dni || '—';
+  document.getElementById('fa-fnac').textContent = a.fechaNacimiento || (a.anioNacimiento ? a.anioNacimiento : '—');
+  document.getElementById('fa-municipio').textContent = a.municipio || '—';
+  document.getElementById('fa-email').textContent = a.email || '—';
+  document.getElementById('fa-tel').textContent = a.tel || '—';
+  document.getElementById('fa-tutor').textContent = a.tutor || '—';
+  document.getElementById('fa-notas').textContent = a.notas || '—';
+  const d = (typeof deudaAtleta === 'function' ? deudaAtleta(id) : 0) + (typeof deudaCargo === 'function' ? deudaCargo(id) : 0);
+  document.getElementById('fa-deuda').innerHTML = d>0 ? `<span style="color:var(--red);font-weight:600">Deuda: ${d}€</span>` : '<span style="color:var(--ok)">Sin deuda</span>';
+  const hist = pagos.filter(p=>p.atletaId===id).sort((a,b)=>b.mes.localeCompare(a.mes));
+  document.getElementById('fa-historial').innerHTML = hist.length ? hist.map(p=>`<tr><td>${fmtMesPag(p.mes)}</td><td>${p.importe}€</td><td>${badgePP(p.estado)}</td><td style="font-size:11px">${fmtFPag(p.fecha)}</td><td style="font-size:11px">${esc(p.notas||'')}</td><td><button class="btn btn-sm" onclick="togglePagoPag(${p.id});verFichaAtleta(${id})">⟳</button></td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);font-size:13px">Sin historial</td></tr>';
+  window._fichaAtletaId = id;
   openModal('ficha-atleta');
+}
+
+function fechaDmyAIso(f) {
+  // 'dd/mm/aaaa' -> 'aaaa-mm-dd' (para <input type=date>)
+  if (!f) return '';
+  const m = f.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return '';
+  return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+}
+function fechaIsoADmy(f) {
+  // 'aaaa-mm-dd' -> 'dd/mm/aaaa'
+  if (!f) return '';
+  const m = f.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 function editarAtleta(id) {
@@ -2032,24 +2007,44 @@ function editarAtleta(id) {
   document.getElementById('na-titulo').textContent = 'Editar atleta';
   document.getElementById('na-id').value = a.id;
   document.getElementById('na-nombre').value = a.nombre;
-  document.getElementById('na-anio').value = a.anioNacimiento || '';
-  document.getElementById('na-categoria').value = a.categoria || '';
+  document.getElementById('na-fnac').value = fechaDmyAIso(a.fechaNacimiento);
+  const sel = document.getElementById('na-categoria');
+  sel.innerHTML = '<option value="">Sin categoría</option>' + CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.value = a.categoria || '';
+  document.getElementById('na-dni').value = a.dni || '';
+  document.getElementById('na-cuota').value = a.cuota || 45;
+  document.getElementById('na-email').value = a.email || '';
+  document.getElementById('na-tel').value = a.tel || '';
+  document.getElementById('na-municipio').value = a.municipio || '';
+  document.getElementById('na-tutor').value = a.tutor || '';
+  document.getElementById('na-notas').value = a.notas || '';
+  document.getElementById('na-paga').checked = a.paga !== false;
+  document.getElementById('na-error').textContent = '';
 }
 
 function guardarAtleta() {
   const id = document.getElementById('na-id').value;
   const nombre = document.getElementById('na-nombre').value.trim();
-  const anioRaw = document.getElementById('na-anio').value;
-  const anioNacimiento = anioRaw ? parseInt(anioRaw) : null;
+  const fnacIso = document.getElementById('na-fnac').value;
+  const fechaNacimiento = fechaIsoADmy(fnacIso);
+  const anioNacimiento = fnacIso ? parseInt(fnacIso.split('-')[0]) : null;
   const categoria = document.getElementById('na-categoria').value;
+  const dni = document.getElementById('na-dni').value.trim();
+  const cuota = parseFloat(document.getElementById('na-cuota').value) || 45;
+  const email = document.getElementById('na-email').value.trim();
+  const tel = document.getElementById('na-tel').value.trim();
+  const municipio = document.getElementById('na-municipio').value.trim();
+  const tutor = document.getElementById('na-tutor').value.trim();
+  const notas = document.getElementById('na-notas').value.trim();
+  const paga = document.getElementById('na-paga').checked;
   const err = document.getElementById('na-error');
   if (!nombre) { err.textContent = 'El nombre es obligatorio.'; return; }
   if (id) {
     const a = atletas.find(x => x.id === parseInt(id));
-    if (a) { a.nombre = nombre; a.categoria = categoria; a.anioNacimiento = anioNacimiento; }
+    if (a) { Object.assign(a, { nombre, categoria, anioNacimiento, fechaNacimiento, dni, cuota, email, tel, municipio, tutor, notas, paga }); }
   } else {
     const nuevoId = Math.max(0, ...atletas.map(a => a.id), 122) + 1;
-    atletas.push({ id: nuevoId, nombre, categoria, estado: 'activo', anioNacimiento });
+    atletas.push(normalizarAtleta({ id: nuevoId, nombre, categoria, estado: 'activo', anioNacimiento, fechaNacimiento, dni, cuota, email, tel, municipio, tutor, notas, paga, alta: new Date().toISOString().split('T')[0] }));
   }
   save();
   closeModal('nuevo-atleta');
@@ -2081,6 +2076,7 @@ function darBajaAtleta(id) {
   registros = registros.filter(r => r.atletaId !== id);
   save();
   renderAdminAtletas();
+  if (document.getElementById('bajas-tab') && document.getElementById('bajas-tab').classList.contains('active')) renderBajasTab();
   renderEquipos();
 }
 
@@ -2090,6 +2086,7 @@ function reactivarAtleta(id) {
   a.estado = 'activo';
   save();
   renderAdminAtletas();
+  renderBajasTab();
 }
 
 /* ---------- EQUIPOS (selección de atletas individuales para pasar lista conjunta) ---------- */
@@ -2263,11 +2260,13 @@ async function iniciarSync(esPrimeraVez) {
       atletas.forEach(a => normalizarAtleta(a));
       const totalAntes = atletas.length;
       aplicarParchesAtletas();
+      const huboParcheContacto = (localStorage.getItem(SK_VER) !== DATA_VERSION) && parchearDatosContacto();
       nextIdEnt = Math.max(0, ...entrenadores.map(e => e.id+1), 1);
       nextIdReg = Math.max(0, ...registros.map(r => r.id+1), 1);
       nextIdEq = Math.max(0, ...equipos.map(e => e.id+1), 1);
+      localStorage.setItem(SK_VER, DATA_VERSION);
       save();
-      if (atletas.length !== totalAntes) await pushRemoto();
+      if (atletas.length !== totalAntes || huboParcheContacto) await pushRemoto();
     } else if (esPrimeraVez) {
       await pushRemoto();
     }
@@ -2288,6 +2287,7 @@ async function iniciarSync(esPrimeraVez) {
       if (data.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, data.inicioCobros);
       atletas.forEach(a => normalizarAtleta(a));
       aplicarParchesAtletas();
+      if (localStorage.getItem(SK_VER) !== DATA_VERSION) { parchearDatosContacto(); localStorage.setItem(SK_VER, DATA_VERSION); }
       localStorage.setItem(SK_ATL, JSON.stringify(atletas));
       localStorage.setItem(SK_ENT, JSON.stringify(entrenadores));
       localStorage.setItem(SK_REG, JSON.stringify(registros));
@@ -2448,24 +2448,21 @@ function showPagosSubTab(id, btn) {
   document.getElementById(id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'pg-resumen') renderPgResumen();
-  else if (id === 'pg-atletas') { poblarFiltrosPgAtletas(); renderPgAtletas(); }
   else if (id === 'pg-pagos') { initPgMeses(); renderPgPagos(); }
   else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
-  else if (id === 'pg-bajas') renderPgBajas();
 }
 
 function refrescarVistasPagos() {
-  const activo = document.querySelector('.pg-subsection.active');
-  if (!activo) return;
+  const activo = document.querySelector('#pagos-tab .pg-subsection.active');
+  if (!activo) { updatePagosNavBadge(); return; }
   const id = activo.id;
   if (id === 'pg-resumen') renderPgResumen();
-  else if (id === 'pg-atletas') renderPgAtletas();
   else if (id === 'pg-pagos') { initPgMeses(); renderPgPagos(); }
   else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
-  else if (id === 'pg-bajas') renderPgBajas();
   updatePagosNavBadge();
+  if (sesion && sesion.tipo === 'admin' && document.getElementById('atletas-tab').classList.contains('active')) renderAdminAtletas();
 }
 
 function updatePagosNavBadge() {
@@ -2474,52 +2471,6 @@ function updatePagosNavBadge() {
   if (!badge) return;
   if (vencidos > 0) { badge.textContent = vencidos; badge.style.display = ''; }
   else badge.style.display = 'none';
-}
-
-function poblarFiltrosPgAtletas() {
-  const sel = document.getElementById('pg-filter-categoria'); if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Todas las categorías</option><option value="__sin__">Sin categoría asignada</option>';
-  CATEGORIAS_FIJAS.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
-  sel.value = cur;
-}
-
-function renderPgAtletas() {
-  poblarFiltrosPgAtletas();
-  const q = (document.getElementById('pg-search-atleta').value||'').toLowerCase();
-  const fe = document.getElementById('pg-filter-estado').value;
-  const fc = document.getElementById('pg-filter-categoria').value;
-  let lista = atletas.filter(a => {
-    if (a.estado==='baja') return fe !== '' && fe !== 'baja' ? false : true;
-    if (!a.estado || a.estado==='baja') { if (fe==='activo') return false; }
-    else if (fe && a.estado!==fe) return false;
-    if (fc==='__sin__') { if (a.categoria) return false; }
-    else if (fc && a.categoria!==fc) return false;
-    if (q && !a.nombre.toLowerCase().includes(q) && !(a.email||'').toLowerCase().includes(q) && !(a.tel||'').includes(q) && !(a.dni||'').toLowerCase().includes(q)) return false;
-    return a.estado !== 'baja';
-  });
-  const total = lista.length, pages = Math.ceil(total/PER_PAGOS)||1;
-  if (pagAtletasPag > pages) pagAtletasPag = 1;
-  const slice = lista.slice((pagAtletasPag-1)*PER_PAGOS, pagAtletasPag*PER_PAGOS);
-  const body = document.getElementById('pg-body-atletas');
-  if (!body) return;
-  body.innerHTML = slice.length===0 ? '<tr><td colspan="7"><div class="empty">Sin resultados</div></td></tr>'
-    : slice.map(a => {
-      const d = deudaAtleta(a.id) + deudaCargo(a.id);
-      return `<tr>
-        <td><a href="#" onclick="verFichaAtletaPag(${a.id});return false;" style="color:var(--navy);font-weight:500;text-decoration:none">${esc(a.nombre)}</a>${a.notas?`<div style="font-size:11px;color:var(--text-muted)">${esc(a.notas)}</div>`:''}</td>
-        <td>${a.categoria ? esc(a.categoria) : '<span style="color:var(--text-muted);font-size:12px">Sin asignar</span>'}</td>
-        <td style="font-size:12px"><div>${esc(a.email||'—')}</div><div style="color:var(--text-muted)">${esc(a.tel||'')}</div></td>
-        <td><span class="badge ${a.estado==='activo'?'badge-ok':'badge-danger'}">${a.estado==='activo'?'Activo':'Baja'}</span></td>
-        <td>${a.paga===false ? '<span style="color:var(--text-muted);font-size:12px">Exento</span>' : (a.cuota||45)+'€/mes'}</td>
-        <td>${d>0?`<span style="color:var(--red);font-weight:600">${d}€</span>`:'<span style="color:var(--ok)">—</span>'}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-sm" onclick="editAtletaPag(${a.id})" title="Editar">✏</button>
-          <button class="btn btn-sm btn-danger" onclick="initBajaPag(${a.id})">Baja</button>
-        </td>
-      </tr>`;
-    }).join('');
-  renderPgPaginador('pg-pag-atletas', pagAtletasPag, pages, p => { pagAtletasPag=p; renderPgAtletas(); }, total);
 }
 
 function renderPgResumen() {
@@ -2549,8 +2500,8 @@ function renderPgResumen() {
   // Cumpleaños del mes
   const cb = document.getElementById('pg-resumen-cumpleanos'); if (!cb) return;
   const mesAct = new Date().getMonth() + 1;
-  const cumple = activos.filter(a => { if (!a.fnac) return false; const m = parseInt((a.fnac||'').split('-')[1]||0); return m === mesAct; });
-  cb.innerHTML = cumple.length ? cumple.map(a => `<div style="padding:4px 0;font-size:13px">🎂 <strong>${esc(a.nombre)}</strong> — ${a.fnac||''}</div>`).join('') : '<div style="color:var(--text-muted);font-size:13px">Ningún cumpleaños este mes.</div>';
+  const cumple = activos.filter(a => { if (!a.fechaNacimiento) return false; const m = parseInt((a.fechaNacimiento||'').split('/')[1]||0); return m === mesAct; });
+  cb.innerHTML = cumple.length ? cumple.map(a => `<div style="padding:4px 0;font-size:13px">🎂 <strong>${esc(a.nombre)}</strong> — ${a.fechaNacimiento||''}</div>`).join('') : '<div style="color:var(--text-muted);font-size:13px">Ningún cumpleaños este mes.</div>';
 
   // Gráfico simple de ingresos (últimos 4 meses)
   const gr = document.getElementById('pg-resumen-grafico'); if (!gr) return;
@@ -2614,22 +2565,6 @@ function renderPgPagos() {
       </tr>`;
     }).join('');
   renderPgPaginador('pg-pag-pagos', pagPagosPag, pages, p => { pagPagosPag=p; renderPgPagos(); }, total);
-}
-
-function renderPgBajas() {
-  const lista = atletas.filter(a => a.estado==='baja');
-  const body = document.getElementById('pg-body-bajas'); if (!body) return;
-  body.innerHTML = lista.length===0 ? '<tr><td colspan="5"><div class="empty">No hay atletas dados de baja</div></td></tr>'
-    : lista.map(a => {
-      const d = deudaAtleta(a.id)+deudaCargo(a.id);
-      return `<tr>
-        <td style="font-weight:500">${esc(a.nombre)}${a.notas?`<div style="font-size:11px;color:var(--text-muted)">${esc(a.notas)}</div>`:''}</td>
-        <td>${a.categoria ? esc(a.categoria) : '<span style="color:var(--text-muted);font-size:12px">Sin asignar</span>'}</td>
-        <td style="font-size:12px"><div>${esc(a.email||'—')}</div><div style="color:var(--text-muted)">${esc(a.tel||'')}</div></td>
-        <td>${d>0?`<span style="color:var(--red);font-weight:600">${d}€</span>`:'—'}</td>
-        <td><button class="btn btn-sm btn-success" onclick="reactivarAtletaPag(${a.id})">↩ Reactivar</button></td>
-      </tr>`;
-    }).join('');
 }
 
 function renderPgAlertas() {
@@ -2705,136 +2640,6 @@ function renderPgPaginador(elId, cur, total, cb, count) {
     <span style="font-size:12px;color:var(--text-muted)">Pág. ${cur}/${total}</span>
     <button class="btn btn-sm" ${cur>=total?'disabled':''} onclick="(${cb.toString()})(${cur+1})">Siguiente →</button>
     <span style="font-size:12px;color:var(--text-muted)">${count} registros</span>`;
-}
-
-// --- Acciones atleta pagos ---
-function addAtletaPag() {
-  const nombre = document.getElementById('nap-nombre').value.trim();
-  const err = document.getElementById('nap-error');
-  if (!nombre) { err.textContent = 'El nombre es obligatorio.'; return; }
-  const anioRaw = document.getElementById('nap-anio').value;
-  const anioNacimiento = anioRaw ? parseInt(anioRaw) : null;
-  const nuevoId = Math.max(0, ...atletas.map(a=>a.id)) + 1;
-  if (nextIdPagos <= nuevoId) nextIdPagos = nuevoId + 1;
-  const nuevo = normalizarAtleta({
-    id: nuevoId, nombre,
-    categoria: document.getElementById('nap-categoria').value || '',
-    estado: 'activo', anioNacimiento,
-    dni: document.getElementById('nap-dni').value.trim(),
-    email: document.getElementById('nap-email').value.trim(),
-    tel: document.getElementById('nap-tel').value.trim(),
-    cuota: parseFloat(document.getElementById('nap-cuota').value)||45,
-    notas: document.getElementById('nap-notas').value.trim(),
-    paga: document.getElementById('nap-paga').checked,
-    alta: new Date().toISOString().split('T')[0]
-  });
-  atletas.push(nuevo);
-  save();
-  closeModal('add-atleta-pag');
-  renderPgAtletas();
-}
-
-function editAtletaPag(id) {
-  const a = atletas.find(x=>x.id===id); if (!a) return;
-  document.getElementById('eap-id').value = id;
-  document.getElementById('eap-nombre').value = a.nombre || '';
-  document.getElementById('eap-anio').value = a.anioNacimiento || '';
-  // poblar categorias
-  const sel = document.getElementById('eap-categoria');
-  sel.innerHTML = '<option value="">Sin categoría</option>';
-  CATEGORIAS_FIJAS.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
-  sel.value = a.categoria || '';
-  document.getElementById('eap-dni').value = a.dni || '';
-  document.getElementById('eap-cuota').value = a.cuota || 45;
-  document.getElementById('eap-email').value = a.email || '';
-  document.getElementById('eap-tel').value = a.tel || '';
-  document.getElementById('eap-municipio').value = a.municipio || '';
-  document.getElementById('eap-tutor').value = a.tutor || '';
-  document.getElementById('eap-direccion').value = a.direccion || '';
-  document.getElementById('eap-notas').value = a.notas || '';
-  document.getElementById('eap-paga').checked = a.paga !== false;
-  openModal('edit-atleta-pag');
-}
-
-function saveEditAtletaPag() {
-  const id = parseInt(document.getElementById('eap-id').value);
-  const a = atletas.find(x=>x.id===id); if (!a) return;
-  const nombre = document.getElementById('eap-nombre').value.trim();
-  if (!nombre) return;
-  a.nombre = nombre;
-  const anioRaw = document.getElementById('eap-anio').value;
-  a.anioNacimiento = anioRaw ? parseInt(anioRaw) : null;
-  a.categoria = document.getElementById('eap-categoria').value || '';
-  a.dni = document.getElementById('eap-dni').value.trim();
-  a.cuota = parseFloat(document.getElementById('eap-cuota').value)||45;
-  a.email = document.getElementById('eap-email').value.trim();
-  a.tel = document.getElementById('eap-tel').value.trim();
-  a.municipio = document.getElementById('eap-municipio').value.trim();
-  a.tutor = document.getElementById('eap-tutor').value.trim();
-  a.direccion = document.getElementById('eap-direccion').value.trim();
-  a.notas = document.getElementById('eap-notas').value.trim();
-  a.paga = document.getElementById('eap-paga').checked;
-  save();
-  closeModal('edit-atleta-pag');
-  renderPgAtletas();
-}
-
-function verFichaAtletaPag(id) {
-  const a = atletas.find(x=>x.id===id); if (!a) return;
-  document.getElementById('fap-nombre').textContent = a.nombre;
-  document.getElementById('fap-estado').textContent = a.estado==='activo'?'Activo':'Baja';
-  document.getElementById('fap-estado').className = 'badge ' + (a.estado==='activo'?'badge-ok':'badge-danger');
-  document.getElementById('fap-categoria').textContent = a.categoria || 'Sin categoría';
-  document.getElementById('fap-cuota').textContent = a.paga===false ? 'Exento' : (a.cuota||45)+'€/mes';
-  document.getElementById('fap-dni').textContent = a.dni || '—';
-  document.getElementById('fap-fnac').textContent = a.fnac || (a.anioNacimiento ? a.anioNacimiento : '—');
-  document.getElementById('fap-email').textContent = a.email || '—';
-  document.getElementById('fap-tel').textContent = a.tel || '—';
-  document.getElementById('fap-municipio').textContent = a.municipio || '—';
-  document.getElementById('fap-tutor').textContent = a.tutor || '—';
-  document.getElementById('fap-direccion').textContent = a.direccion || '—';
-  document.getElementById('fap-notas').textContent = a.notas || '—';
-  const d = deudaAtleta(id)+deudaCargo(id);
-  document.getElementById('fap-deuda').innerHTML = d>0 ? `<span style="color:var(--red);font-weight:600">Deuda: ${d}€</span>` : '<span style="color:var(--ok)">Sin deuda</span>';
-  const hist = pagos.filter(p=>p.atletaId===id).sort((a,b)=>b.mes.localeCompare(a.mes));
-  document.getElementById('fap-historial').innerHTML = hist.length ? hist.map(p=>`<tr><td>${fmtMesPag(p.mes)}</td><td>${p.importe}€</td><td>${badgePP(p.estado)}</td><td style="font-size:11px">${fmtFPag(p.fecha)}</td><td style="font-size:11px">${esc(p.notas||'')}</td><td><button class="btn btn-sm" onclick="togglePagoPag(${p.id});verFichaAtletaPag(${id})">⟳</button></td></tr>`).join('')
-    : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);font-size:13px">Sin historial</td></tr>';
-  window._fichaAtletaPagId = id;
-  openModal('ficha-atleta-pag');
-}
-
-function editarDesdefichaPag() {
-  closeModal('ficha-atleta-pag');
-  if (window._fichaAtletaPagId) editAtletaPag(window._fichaAtletaPagId);
-}
-
-let bajaTargetPagId = null;
-function initBajaPag(id) {
-  const a = atletas.find(x=>x.id===id); if (!a) return;
-  bajaTargetPagId = id;
-  document.getElementById('bajapag-nombre').textContent = a.nombre;
-  openModal('baja-pag');
-}
-function confirmarBajaPag() {
-  if (!bajaTargetPagId) return;
-  const a = atletas.find(x=>x.id===bajaTargetPagId); if (!a) return;
-  a.estado = 'baja';
-  // Eliminar de todos los equipos
-  equipos.forEach(eq => { eq.atletaIds = (eq.atletaIds || []).filter(aid => aid !== bajaTargetPagId); });
-  // Eliminar todos sus registros de asistencia
-  registros = registros.filter(r => r.atletaId !== bajaTargetPagId);
-  save();
-  closeModal('baja-pag');
-  bajaTargetPagId = null;
-  renderPgAtletas();
-  renderEquipos();
-}
-function reactivarAtletaPag(id) {
-  const a = atletas.find(x=>x.id===id); if (!a) return;
-  a.estado = 'activo';
-  save();
-  renderPgBajas();
-  renderPgAtletas();
 }
 
 // --- Acciones pagos mensuales ---
