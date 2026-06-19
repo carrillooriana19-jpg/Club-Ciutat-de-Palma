@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>C.N Ciutat de Palma — Asistencia</title>
 <style>
 :root {
@@ -1142,6 +1145,11 @@ const SK_ATL = 'wpa_atletas', SK_ENT = 'wpa_entrenadores', SK_REG = 'wpa_registr
       SK_PAG = 'wpa_pagos', SK_CAR = 'wpa_cargos', SK_CARPAG = 'wpa_cargopagos', SK_NEXTID_PAGOS = 'wpa_nextid_pagos',
       SK_INICIO_COBROS = 'wpa_inicio_cobros';
 const DATA_VERSION = '5-atletas-unificado';
+// BUILD_ID: identificador único de esta versión del archivo. Cada vez que se suba
+// una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
+// La app lo usa para detectar automáticamente si hay una versión más reciente
+// publicada y recargarse sola, sin que nadie tenga que borrar el historial.
+const BUILD_ID = '2026-06-19-01';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2796,6 +2804,70 @@ function crearConceptoCargo() {
   closeModal('nuevo-cargo');
   renderPgCargos();
 }
+
+/* =====================================================================
+   AUTO-ACTUALIZACIÓN
+   Comprueba periódicamente si hay una versión más nueva del archivo
+   publicada en GitHub Pages (comparando BUILD_ID) y recarga la página
+   automáticamente cuando detecta un cambio, sin que nadie tenga que
+   borrar el historial ni refrescar manualmente.
+   ===================================================================== */
+let __autoUpdateChecking = false;
+let __nuevaVersionDetectada = false;
+async function comprobarNuevaVersion() {
+  if (__autoUpdateChecking || __nuevaVersionDetectada) return;
+  __autoUpdateChecking = true;
+  try {
+    // Volvemos a pedir el propio archivo con un parámetro anti-caché, así
+    // el navegador y GitHub Pages no nos devuelven una copia guardada.
+    const url = window.location.href.split('?')[0].split('#')[0] + '?nocache=' + Date.now();
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) return;
+    const texto = await resp.text();
+    const match = texto.match(/const BUILD_ID = '([^']+)'/);
+    if (match && match[1] && match[1] !== BUILD_ID) {
+      __nuevaVersionDetectada = true;
+      aplicarActualizacionAutomatica();
+    }
+  } catch (e) {
+    // Si falla (sin conexión, etc.) simplemente lo intentamos en el siguiente ciclo.
+  } finally {
+    __autoUpdateChecking = false;
+  }
+}
+
+function aplicarActualizacionAutomatica() {
+  // Si la pestaña no está visible ahora mismo (el entrenador cambió de app),
+  // recargamos directamente: no hay riesgo de interrumpir nada.
+  if (document.visibilityState !== 'visible') {
+    window.location.reload();
+    return;
+  }
+  // Si está visible, avisamos discretamente y recargamos solos a los pocos
+  // segundos, dando tiempo a que termine de marcar lo que esté marcando
+  // (cada marca ya se guarda al instante en Firebase, así que no se pierde nada).
+  const aviso = document.createElement('div');
+  aviso.textContent = 'Hay una actualización disponible. Recargando en unos segundos...';
+  aviso.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0f1f3d;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+  document.body.appendChild(aviso);
+  setTimeout(() => window.location.reload(), 6000);
+  // Si la pestaña pasa a segundo plano antes de esos 6s, recargamos en cuanto vuelva.
+  document.addEventListener('visibilitychange', function reloadOnHide() {
+    if (document.visibilityState !== 'visible') {
+      document.removeEventListener('visibilitychange', reloadOnHide);
+      window.location.reload();
+    }
+  });
+}
+
+// Primera comprobación a los 10s de abrir la app, y luego cada 3 minutos.
+// También se comprueba cada vez que la pestaña vuelve a primer plano,
+// que es el momento típico en que un entrenador retoma la app.
+setTimeout(comprobarNuevaVersion, 10000);
+setInterval(comprobarNuevaVersion, 3 * 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') comprobarNuevaVersion();
+});
 
 initAuth();
 </script>
