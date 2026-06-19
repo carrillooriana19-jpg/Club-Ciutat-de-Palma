@@ -689,6 +689,13 @@ tr:last-child td { border-bottom: none; }
           <button class="btn btn-primary" onclick="aplicarCuotaCategoria()">Aplicar cuota</button>
           <div id="cfg-cuota-status" style="margin-top:14px;font-size:13.5px;color:var(--text-muted)"></div>
         </div>
+
+        <div class="card" style="margin-top:18px">
+          <strong style="font-size:15px">Rellenar datos de contacto faltantes</strong>
+          <p style="font-size:13px;color:var(--text-muted);margin:8px 0 16px">Si a algún atleta le faltan datos como DNI, municipio, tutor legal o email a pesar de que ya se cargaron antes, pulsa este botón para forzar el relleno desde el listado original. No se pisa ningún dato que ya esté escrito a mano.</p>
+          <button class="btn btn-primary" onclick="forzarReparcheoContacto()">Rellenar datos faltantes ahora</button>
+          <div id="cfg-parche-status" style="margin-top:14px;font-size:13.5px;color:var(--text-muted)"></div>
+        </div>
       </div>
 
       <!-- PAGOS (solo admin) -->
@@ -1143,13 +1150,13 @@ const CATEGORIAS_FIJAS = ["Benjamín","Alevín","Infantil","Cadete","Junior","Ab
 const SK_ATL = 'wpa_atletas', SK_ENT = 'wpa_entrenadores', SK_REG = 'wpa_registros', SK_EQ = 'wpa_equipos',
       SK_ADMINPASS = 'wpa_adminpass', SK_SESION = 'wpa_sesion', SK_VER = 'wpa_ver', SK_TOKEN = 'wpa_synctoken',
       SK_PAG = 'wpa_pagos', SK_CAR = 'wpa_cargos', SK_CARPAG = 'wpa_cargopagos', SK_NEXTID_PAGOS = 'wpa_nextid_pagos',
-      SK_INICIO_COBROS = 'wpa_inicio_cobros';
+      SK_INICIO_COBROS = 'wpa_inicio_cobros', SK_PARCHE_CONTACTO = 'wpa_parche_contacto_v1';
 const DATA_VERSION = '5-atletas-unificado';
 // BUILD_ID: identificador único de esta versión del archivo. Cada vez que se suba
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-01';
+const BUILD_ID = '2026-06-19-02';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1233,7 +1240,10 @@ function load() {
       // primera vez (o versión nueva): cargamos el listado real de atletas del club
       const existentes = new Set(atletas.map(a => a.id));
       ATLETAS_SEED.forEach(a => { if (!existentes.has(a.id)) atletas.push({...a}); });
-      // Además, rellenamos datos de contacto que falten en atletas ya existentes.
+    }
+    // El parche de datos de contacto se controla con su propia marca, independiente
+    // de SK_VER, para que no se "consuma" antes de que lleguen los datos de Firebase.
+    if (!localStorage.getItem(SK_PARCHE_CONTACTO)) {
       parchearDatosContacto();
     }
     // Asegura que todo atleta tenga un estado válido y los campos de gestión de pagos (compatibilidad con datos antiguos)
@@ -1338,6 +1348,26 @@ function aplicarCuotaCategoria() {
   afectados.forEach(a => { a.cuota = importe; });
   save();
   status.textContent = `Listo: se actualizó la cuota de ${afectados.length} atleta(s) a ${importe}€/mes.`;
+}
+
+async function forzarReparcheoContacto() {
+  if (!sesion || sesion.tipo !== 'admin') return;
+  const status = document.getElementById('cfg-parche-status');
+  status.textContent = 'Aplicando...';
+  const cambios = parchearDatosContacto();
+  localStorage.setItem(SK_PARCHE_CONTACTO, '1');
+  save();
+  // Forzamos también la subida inmediata a Firebase, sin esperar al ciclo
+  // normal de sincronización, para que el resto de dispositivos lo reciban ya.
+  if (typeof pushRemoto === 'function') {
+    try { await pushRemoto(); } catch(e) {}
+  }
+  renderAdminAtletas();
+  if (cambios) {
+    status.textContent = 'Listo: se han rellenado los datos de contacto que faltaban.';
+  } else {
+    status.textContent = 'No había datos pendientes de rellenar (ya estaban todos completos o ya se habían cargado).';
+  }
 }
 
 function aplicarParchesAtletas() {
@@ -2268,7 +2298,8 @@ async function iniciarSync(esPrimeraVez) {
       atletas.forEach(a => normalizarAtleta(a));
       const totalAntes = atletas.length;
       aplicarParchesAtletas();
-      const huboParcheContacto = (localStorage.getItem(SK_VER) !== DATA_VERSION) && parchearDatosContacto();
+      const huboParcheContacto = !localStorage.getItem(SK_PARCHE_CONTACTO) && parchearDatosContacto();
+      if (huboParcheContacto) localStorage.setItem(SK_PARCHE_CONTACTO, '1');
       nextIdEnt = Math.max(0, ...entrenadores.map(e => e.id+1), 1);
       nextIdReg = Math.max(0, ...registros.map(r => r.id+1), 1);
       nextIdEq = Math.max(0, ...equipos.map(e => e.id+1), 1);
@@ -2295,7 +2326,7 @@ async function iniciarSync(esPrimeraVez) {
       if (data.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, data.inicioCobros);
       atletas.forEach(a => normalizarAtleta(a));
       aplicarParchesAtletas();
-      if (localStorage.getItem(SK_VER) !== DATA_VERSION) { parchearDatosContacto(); localStorage.setItem(SK_VER, DATA_VERSION); }
+      if (!localStorage.getItem(SK_PARCHE_CONTACTO)) { if (parchearDatosContacto()) localStorage.setItem(SK_PARCHE_CONTACTO, '1'); }
       localStorage.setItem(SK_ATL, JSON.stringify(atletas));
       localStorage.setItem(SK_ENT, JSON.stringify(entrenadores));
       localStorage.setItem(SK_REG, JSON.stringify(registros));
