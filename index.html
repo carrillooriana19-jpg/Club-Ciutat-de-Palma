@@ -1156,7 +1156,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-02';
+const BUILD_ID = '2026-06-19-04';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1955,12 +1955,7 @@ function renderAdminAtletas() {
     return `
     <tr>
       <td data-label="Atleta" class="no-label"><a href="javascript:void(0)" onclick="verFichaAtleta(${a.id})" style="color:var(--navy);font-weight:500;text-decoration:none;border-bottom:1px dotted var(--text-muted)">${esc(a.nombre)}</a></td>
-      <td data-label="Categoría">
-        <select onchange="cambiarCategoriaAtleta(${a.id}, this.value)" style="min-width:150px" ${a.estado==='baja'?'disabled':''}>
-          <option value="">Sin categoría</option>
-          ${CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}" ${a.categoria===c?'selected':''}>${esc(c)}</option>`).join('')}
-        </select>
-      </td>
+      <td data-label="Categoría">${a.categoria ? esc(a.categoria) : '<span style="color:var(--text-muted);font-size:12px">Sin categoría</span>'}</td>
       <td data-label="Contacto" style="font-size:12px"><div>${esc(a.email||'—')}</div><div style="color:var(--text-muted)">${esc(a.tel||'')}</div></td>
       <td data-label="Estado">${a.estado === 'activo' ? '<span class="badge badge-ok">Activo</span>' : '<span class="badge badge-gray">De baja</span>'}</td>
       <td data-label="Cuota">${a.paga===false ? '<span style="color:var(--text-muted);font-size:12px">Exento</span>' : (a.cuota||45)+'€/mes'}</td>
@@ -2845,6 +2840,14 @@ function crearConceptoCargo() {
    ===================================================================== */
 let __autoUpdateChecking = false;
 let __nuevaVersionDetectada = false;
+function recargarSinCache() {
+  // location.reload() puede seguir sirviendo una copia cacheada en algunos
+  // navegadores/servidores. Para garantizar que se trae la versión real,
+  // navegamos a la misma URL pero con un parámetro distinto cada vez.
+  const base = window.location.href.split('?')[0].split('#')[0];
+  window.location.replace(base + '?v=' + Date.now());
+}
+
 async function comprobarNuevaVersion() {
   if (__autoUpdateChecking || __nuevaVersionDetectada) return;
   __autoUpdateChecking = true;
@@ -2871,7 +2874,7 @@ function aplicarActualizacionAutomatica() {
   // Si la pestaña no está visible ahora mismo (el entrenador cambió de app),
   // recargamos directamente: no hay riesgo de interrumpir nada.
   if (document.visibilityState !== 'visible') {
-    window.location.reload();
+    recargarSinCache();
     return;
   }
   // Si está visible, avisamos discretamente y recargamos solos a los pocos
@@ -2881,21 +2884,22 @@ function aplicarActualizacionAutomatica() {
   aviso.textContent = 'Hay una actualización disponible. Recargando en unos segundos...';
   aviso.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0f1f3d;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,.25)';
   document.body.appendChild(aviso);
-  setTimeout(() => window.location.reload(), 6000);
+  setTimeout(recargarSinCache, 6000);
   // Si la pestaña pasa a segundo plano antes de esos 6s, recargamos en cuanto vuelva.
   document.addEventListener('visibilitychange', function reloadOnHide() {
     if (document.visibilityState !== 'visible') {
       document.removeEventListener('visibilitychange', reloadOnHide);
-      window.location.reload();
+      recargarSinCache();
     }
   });
 }
 
-// Primera comprobación a los 10s de abrir la app, y luego cada 3 minutos.
-// También se comprueba cada vez que la pestaña vuelve a primer plano,
-// que es el momento típico en que un entrenador retoma la app.
-setTimeout(comprobarNuevaVersion, 10000);
-setInterval(comprobarNuevaVersion, 3 * 60 * 1000);
+// Primera comprobación a los 4s de abrir la app (antes eran 10s), y luego
+// cada minuto (antes cada 3). También se comprueba cada vez que la pestaña
+// vuelve a primer plano, que es el momento típico en que un entrenador
+// retoma la app después de tenerla en segundo plano.
+setTimeout(comprobarNuevaVersion, 4000);
+setInterval(comprobarNuevaVersion, 60 * 1000);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') comprobarNuevaVersion();
 });
