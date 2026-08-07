@@ -622,6 +622,8 @@ tr:last-child td { border-bottom: none; }
               <input type="search" id="adm-buscar-atleta" placeholder="Buscar nombre, DNI, email..." oninput="renderAdminAtletas()">
             </div>
             <button class="btn btn-primary btn-sm" onclick="openModal('nuevo-atleta')">+ Nuevo atleta</button>
+            <button class="btn btn-sm" onclick="exportarAtletasCSV()">⬇ Excel/CSV</button>
+            <button class="btn btn-sm" onclick="exportarAtletasPDF()">⬇ PDF</button>
           </div>
           <div class="table-wrap">
             <table class="responsive-cards">
@@ -1156,7 +1158,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-04';
+const BUILD_ID = '2026-06-19-05';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2903,6 +2905,123 @@ setInterval(comprobarNuevaVersion, 60 * 1000);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') comprobarNuevaVersion();
 });
+
+function atletasFiltradosActuales() {
+  // Devuelve la lista de atletas según los filtros activos en la pestaña Atletas
+  const filtroEstado = document.getElementById('atl-filtro-estado').value;
+  const filtroCat = document.getElementById('adm-filtro-cat').value;
+  const q = (document.getElementById('adm-buscar-atleta').value || '').toLowerCase();
+  let lista = atletas.slice();
+  if (filtroEstado) lista = lista.filter(a => a.estado === filtroEstado);
+  if (filtroCat === '__sin__') lista = lista.filter(a => !a.categoria);
+  else if (filtroCat) lista = lista.filter(a => a.categoria === filtroCat);
+  if (q) lista = lista.filter(a => a.nombre.toLowerCase().includes(q) || (a.dni||'').toLowerCase().includes(q) || (a.email||'').toLowerCase().includes(q));
+  return lista.sort((a,b) => a.nombre.localeCompare(b.nombre));
+}
+
+function exportarAtletasCSV() {
+  const lista = atletasFiltradosActuales();
+  const cabecera = ['Nombre','Categoría','Estado','Fecha nacimiento','DNI/NIE','Email','Teléfono','Municipio','Tutor legal','Cuota (€/mes)','Notas'];
+  const filas = lista.map(a => [
+    a.nombre,
+    a.categoria || '',
+    a.estado === 'activo' ? 'Activo' : 'De baja',
+    a.fechaNacimiento || (a.anioNacimiento || ''),
+    a.dni || '',
+    a.email || '',
+    a.tel || '',
+    a.municipio || '',
+    a.tutor || '',
+    a.paga === false ? 'Exento' : (a.cuota || 45),
+    a.notas || ''
+  ]);
+  const csvContent = [cabecera, ...filas]
+    .map(fila => fila.map(celda => `"${String(celda).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `atletas_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function exportarAtletasPDF() {
+  const lista = atletasFiltradosActuales();
+  const { PDFDocument, rgb, StandardFonts } = window.PDFLib;
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const navy = rgb(0.059, 0.122, 0.239);
+  const gris = rgb(0.4, 0.4, 0.4);
+  const blanco = rgb(1, 1, 1);
+  const fondo = rgb(0.965, 0.957, 0.937);
+
+  const PW = 595, PH = 842, M = 36;
+  const COL_WIDTHS = [180, 80, 85, 75, 110]; // Nombre, Categoría, F.Nacimiento, DNI, Email
+  const COLS = ['Nombre', 'Categoría', 'F. Nacimiento', 'DNI / NIE', 'Email'];
+  const ROW_H = 18, HEAD_H = 22;
+
+  let page = pdfDoc.addPage([PW, PH]);
+  let y = PH - M;
+
+  const nuevaPagina = () => {
+    page = pdfDoc.addPage([PW, PH]);
+    y = PH - M;
+    dibujarCabecera();
+  };
+
+  const dibujarCabecera = () => {
+    // Título
+    page.drawText('C.N Ciutat de Palma — Listado de Atletas', { x: M, y, font: fontBold, size: 13, color: navy });
+    y -= 14;
+    page.drawText(`Generado el ${new Date().toLocaleDateString('es-ES')} · ${lista.length} atleta(s)`, { x: M, y, font, size: 9, color: gris });
+    y -= 18;
+    // Cabecera tabla
+    page.drawRectangle({ x: M, y: y - 4, width: PW - M * 2, height: HEAD_H, color: navy });
+    let x = M + 4;
+    COLS.forEach((col, i) => {
+      page.drawText(col, { x, y: y + 3, font: fontBold, size: 9, color: blanco });
+      x += COL_WIDTHS[i];
+    });
+    y -= (HEAD_H - 4);
+  };
+
+  dibujarCabecera();
+
+  lista.forEach((a, idx) => {
+    if (y < M + ROW_H + 10) nuevaPagina();
+    // Fondo alternado
+    if (idx % 2 === 0) {
+      page.drawRectangle({ x: M, y: y - 4, width: PW - M * 2, height: ROW_H, color: fondo });
+    }
+    const fnac = a.fechaNacimiento || (a.anioNacimiento ? String(a.anioNacimiento) : '—');
+    const valores = [
+      a.nombre.slice(0, 28),
+      (a.categoria || 'Sin cat.').slice(0, 12),
+      fnac,
+      (a.dni || '—').slice(0, 12),
+      (a.email || '—').slice(0, 22)
+    ];
+    let x = M + 4;
+    valores.forEach((val, i) => {
+      page.drawText(val, { x, y: y + 2, font, size: 8.5, color: a.estado === 'baja' ? gris : rgb(0.11, 0.14, 0.19) });
+      x += COL_WIDTHS[i];
+    });
+    y -= ROW_H;
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `atletas_${new Date().toISOString().slice(0,10)}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 initAuth();
 </script>
