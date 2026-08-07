@@ -439,9 +439,14 @@ tr:last-child td { border-bottom: none; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>
       Administración
     </button>
-    <button class="nav-item active" id="nav-asistencia" onclick="showTab('asistencia-tab',this)">
+    <button class="nav-item" id="nav-asistencia" onclick="showTab('asistencia-tab',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       Asistencia
+    </button>
+    <button class="nav-item" id="nav-calendario" onclick="showTab('calendario-tab',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendario
+      <span class="nav-badge" id="cal-badge" style="display:none"></span>
     </button>
     <button class="nav-item" id="nav-atletas" style="display:none" onclick="showTab('atletas-tab',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -490,6 +495,7 @@ tr:last-child td { border-bottom: none; }
           <button class="pg-subnav-item active" onclick="showAsistenciaSubTab('pasar-lista',this)">Pasar lista</button>
           <button class="pg-subnav-item" onclick="showAsistenciaSubTab('equipos-tab',this)">Mis equipos</button>
           <button class="pg-subnav-item" onclick="showAsistenciaSubTab('resumen',this)">Resumen / %</button>
+          <button class="pg-subnav-item" onclick="showAsistenciaSubTab('resumen-cat',this)">Por categoría</button>
           <button class="pg-subnav-item" onclick="showAsistenciaSubTab('pdf',this)">Informe PDF</button>
         </div>
 
@@ -555,6 +561,20 @@ tr:last-child td { border-bottom: none; }
                 <tbody id="body-resumen"></tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <!-- RESUMEN POR CATEGORÍA -->
+        <div id="resumen-cat" class="pg-subsection">
+          <div class="page-title">Asistencia por categoría</div>
+          <div class="page-sub">Comparativa de porcentaje de asistencia entre categorías, con tendencia respecto al mes anterior.</div>
+          <div class="card">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <input type="month" id="rescat-mes" onchange="renderResumenCategoria()">
+              </div>
+            </div>
+            <div id="rescat-body"></div>
           </div>
         </div>
 
@@ -651,6 +671,42 @@ tr:last-child td { border-bottom: none; }
             </table>
           </div>
         </div>
+      </div>
+
+      <!-- CALENDARIO (visible para todos) -->
+      <div id="calendario-tab" class="section">
+        <div class="page-title">Calendario</div>
+        <div class="page-sub">Partidos, entrenamientos especiales y eventos del club.</div>
+
+        <div id="cal-admin-panel" style="display:none">
+          <div class="card" style="margin-bottom:16px">
+            <strong style="font-size:15px">Añadir evento</strong>
+            <div class="field-row" style="margin-top:12px">
+              <div class="field"><label>Fecha *</label><input type="date" id="cal-nueva-fecha"></div>
+              <div class="field"><label>Hora</label><input type="time" id="cal-nueva-hora" placeholder="Opcional"></div>
+              <div class="field"><label>Tipo</label>
+                <select id="cal-nuevo-tipo">
+                  <option value="partido">⚽ Partido</option>
+                  <option value="entrenamiento">🏊 Entrenamiento especial</option>
+                  <option value="torneo">🏆 Torneo</option>
+                  <option value="otro">📌 Otro</option>
+                </select>
+              </div>
+            </div>
+            <div class="field"><label>Título *</label><input id="cal-nuevo-titulo" placeholder="Ej. C.N Ciutat de Palma vs C.N Palma"></div>
+            <div class="field-row">
+              <div class="field"><label>Lugar</label><input id="cal-nuevo-lugar" placeholder="Piscina Son Hugo..."></div>
+              <div class="field"><label>Categorías (separadas por coma)</label><input id="cal-nuevo-cats" placeholder="Todas, o Benjamín, Alevín..."></div>
+            </div>
+            <div class="field"><label>Notas adicionales</label><textarea id="cal-nuevo-notas" placeholder="Convocatoria, equipación, indicaciones..."></textarea></div>
+            <div class="modal-actions" style="padding:0;margin-top:12px">
+              <button class="btn btn-primary" onclick="guardarEvento()">Añadir evento</button>
+              <div id="cal-nuevo-error" class="login-error" style="margin:0"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="cal-lista"></div>
       </div>
 
       <!-- CONFIGURACIÓN (solo admin) -->
@@ -1158,7 +1214,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-05';
+const BUILD_ID = '2026-06-19-06';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1176,6 +1232,8 @@ let syncEnabled = false, syncUnsubscribe = null, lastPushedSnapshot = null, sync
 
 // ---- Sección de PAGOS (solo Administración) ----
 let pagos = [], cargos = [], cargoPagos = [], nextIdPagos = 100;
+let eventos = []; // {id, fecha:'YYYY-MM-DD', hora, tipo, titulo, lugar, categorias, notas}
+const SK_EVENTOS = 'wpa_eventos';
 let pagAtletasPag = 1, pagPagosPag = 1, pagCargosPag = 1;
 let bajaTargetPagos = null;
 const PER_PAGOS = 12;
@@ -1215,6 +1273,7 @@ function save() {
     localStorage.setItem(SK_CAR, JSON.stringify(cargos));
     localStorage.setItem(SK_CARPAG, JSON.stringify(cargoPagos));
     localStorage.setItem(SK_NEXTID_PAGOS, String(nextIdPagos));
+    localStorage.setItem(SK_EVENTOS, JSON.stringify(eventos));
     if (syncEnabled) pushRemoto();
   } catch(e) { console.error(e); }
 }
@@ -1230,6 +1289,7 @@ function load() {
     const rcar = localStorage.getItem(SK_CAR);
     const rcarpag = localStorage.getItem(SK_CARPAG);
     const rnip = localStorage.getItem(SK_NEXTID_PAGOS);
+    const rev = localStorage.getItem(SK_EVENTOS);
     atletas = ra ? JSON.parse(ra) : [];
     entrenadores = re ? JSON.parse(re) : [];
     registros = rr ? JSON.parse(rr) : [];
@@ -1238,6 +1298,7 @@ function load() {
     cargos = rcar ? JSON.parse(rcar) : [];
     cargoPagos = rcarpag ? JSON.parse(rcarpag) : [];
     nextIdPagos = rnip ? (parseInt(rnip) || 100) : 100;
+    eventos = rev ? JSON.parse(rev) : [];
     if (!ra || rv !== DATA_VERSION) {
       // primera vez (o versión nueva): cargamos el listado real de atletas del club
       const existentes = new Set(atletas.map(a => a.id));
@@ -1506,6 +1567,7 @@ function onAuthenticated() {
   poblarFiltroCategoriaAtletas();
   renderAdminAtletas();
   renderEquipos();
+  actualizarBadgeCalendario();
 }
 
 function logout() {
@@ -1637,6 +1699,7 @@ function showTab(t, btn) {
   if (t === 'admin') renderAdminEntrenadores();
   if (t === 'atletas-tab') { poblarFiltroCategoriaAtletas(); renderAdminAtletas(); }
   if (t === 'bajas-tab') { document.getElementById('bajas-buscar').value = ''; renderBajasTab(); }
+  if (t === 'calendario-tab') { renderCalendario(); }
   if (t === 'config-tab') {
     const sel = document.getElementById('cfg-categoria-destino');
     sel.innerHTML = CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
@@ -2292,6 +2355,7 @@ async function iniciarSync(esPrimeraVez) {
       cargoPagos = remoto.cargoPagos || [];
       nextIdPagos = remoto.nextIdPagos || nextIdPagos;
       if (remoto.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, remoto.inicioCobros);
+      eventos = remoto.eventos || [];
       atletas.forEach(a => normalizarAtleta(a));
       const totalAntes = atletas.length;
       aplicarParchesAtletas();
@@ -2321,6 +2385,8 @@ async function iniciarSync(esPrimeraVez) {
       cargoPagos = data.cargoPagos || [];
       nextIdPagos = data.nextIdPagos || nextIdPagos;
       if (data.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, data.inicioCobros);
+      eventos = data.eventos || [];
+      localStorage.setItem(SK_EVENTOS, JSON.stringify(eventos));
       atletas.forEach(a => normalizarAtleta(a));
       aplicarParchesAtletas();
       if (!localStorage.getItem(SK_PARCHE_CONTACTO)) { if (parchearDatosContacto()) localStorage.setItem(SK_PARCHE_CONTACTO, '1'); }
@@ -2350,7 +2416,7 @@ async function pushRemoto() {
   const token = syncToken();
   if (!token || !window.__fb || !window.__fb.ready) return;
   try {
-    const data = { atletas, entrenadores, registros, equipos, pagos, cargos, cargoPagos, nextIdPagos, inicioCobros: inicioCobros(), updatedAt: new Date().toISOString() };
+    const data = { atletas, entrenadores, registros, equipos, pagos, cargos, cargoPagos, nextIdPagos, inicioCobros: inicioCobros(), eventos, updatedAt: new Date().toISOString() };
     lastPushedSnapshot = JSON.stringify(data);
     await window.__fb.push(token, data);
   } catch (e) { console.error('Error al subir datos:', e); }
@@ -2474,6 +2540,12 @@ function showAsistenciaSubTab(id, btn) {
   if (id === 'pasar-lista') renderMenuPasarLista();
   else if (id === 'equipos-tab') renderEquipos();
   else if (id === 'resumen') { poblarSelectsCategoria(); renderResumenAsistencia(); }
+  else if (id === 'resumen-cat') {
+    const hoy = new Date();
+    const mesStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('rescat-mes').value = mesStr;
+    renderResumenCategoria();
+  }
   else if (id === 'pdf') poblarSelectsCategoria();
 }
 
@@ -3021,6 +3093,183 @@ async function exportarAtletasPDF() {
   link.download = `atletas_${new Date().toISOString().slice(0,10)}.pdf`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+/* =====================================================================
+   CALENDARIO DE EVENTOS
+   ===================================================================== */
+const TIPO_EVENTO = { partido: '⚽ Partido', entrenamiento: '🏊 Entrenamiento especial', torneo: '🏆 Torneo', otro: '📌 Otro' };
+const COLOR_TIPO = { partido: '#1d8a4a', entrenamiento: '#1a5fa8', torneo: '#c8a020', otro: '#6b7280' };
+
+function guardarEvento() {
+  const fecha = document.getElementById('cal-nueva-fecha').value;
+  const titulo = document.getElementById('cal-nuevo-titulo').value.trim();
+  const err = document.getElementById('cal-nuevo-error');
+  if (!fecha || !titulo) { err.textContent = 'Fecha y título son obligatorios.'; return; }
+  err.textContent = '';
+  const nuevoId = Math.max(0, ...eventos.map(e => e.id||0)) + 1;
+  eventos.push({
+    id: nuevoId,
+    fecha,
+    hora: document.getElementById('cal-nueva-hora').value || '',
+    tipo: document.getElementById('cal-nuevo-tipo').value,
+    titulo,
+    lugar: document.getElementById('cal-nuevo-lugar').value.trim(),
+    categorias: document.getElementById('cal-nuevo-cats').value.trim(),
+    notas: document.getElementById('cal-nuevo-notas').value.trim()
+  });
+  eventos.sort((a,b) => a.fecha.localeCompare(b.fecha));
+  save();
+  // Limpiar formulario
+  ['cal-nueva-fecha','cal-nueva-hora','cal-nuevo-titulo','cal-nuevo-lugar','cal-nuevo-cats','cal-nuevo-notas'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('cal-nuevo-tipo').value = 'partido';
+  renderCalendario();
+  actualizarBadgeCalendario();
+}
+
+function eliminarEvento(id) {
+  if (!confirm('¿Eliminar este evento?')) return;
+  eventos = eventos.filter(e => e.id !== id);
+  save();
+  renderCalendario();
+  actualizarBadgeCalendario();
+}
+
+function actualizarBadgeCalendario() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const proximos = eventos.filter(e => e.fecha >= hoy).length;
+  const badge = document.getElementById('cal-badge');
+  if (!badge) return;
+  if (proximos > 0) { badge.textContent = proximos; badge.style.display = ''; }
+  else badge.style.display = 'none';
+}
+
+function renderCalendario() {
+  const esAdmin = sesion && sesion.tipo === 'admin';
+  const panel = document.getElementById('cal-admin-panel');
+  if (panel) panel.style.display = esAdmin ? '' : 'none';
+
+  const hoy = new Date().toISOString().split('T')[0];
+  const proximos = eventos.filter(e => e.fecha >= hoy).sort((a,b) => a.fecha.localeCompare(b.fecha));
+  const pasados = eventos.filter(e => e.fecha < hoy).sort((a,b) => b.fecha.localeCompare(a.fecha));
+
+  const fmtFechaEvento = (f) => {
+    const [y,m,d] = f.split('-');
+    const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const dt = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+    return `${dias[dt.getDay()]} ${parseInt(d)} de ${meses[parseInt(m)-1]} de ${y}`;
+  };
+
+  const renderEvento = (ev) => {
+    const color = COLOR_TIPO[ev.tipo] || COLOR_TIPO.otro;
+    const etiqueta = TIPO_EVENTO[ev.tipo] || '📌 Otro';
+    const pasado = ev.fecha < hoy;
+    return `
+    <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);opacity:${pasado?'.6':'1'}">
+      <div style="width:4px;min-height:60px;background:${color};border-radius:4px;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="font-size:11px;font-weight:600;color:${color};text-transform:uppercase;letter-spacing:.04em">${etiqueta}</span>
+          ${ev.categorias ? `<span style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:1px 7px;border-radius:20px;border:1px solid var(--border)">${esc(ev.categorias)}</span>` : ''}
+        </div>
+        <div style="font-weight:600;font-size:15px;color:var(--navy);margin-bottom:2px">${esc(ev.titulo)}</div>
+        <div style="font-size:12.5px;color:var(--text-muted)">${fmtFechaEvento(ev.fecha)}${ev.hora ? ' · ' + ev.hora + 'h' : ''}${ev.lugar ? ' · ' + esc(ev.lugar) : ''}</div>
+        ${ev.notas ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;padding:8px;background:var(--bg);border-radius:6px">${esc(ev.notas)}</div>` : ''}
+      </div>
+      ${esAdmin ? `<button class="btn btn-sm btn-danger" onclick="eliminarEvento(${ev.id})" style="align-self:flex-start;flex-shrink:0">✕</button>` : ''}
+    </div>`;
+  };
+
+  const lista = document.getElementById('cal-lista');
+  if (!lista) return;
+
+  if (proximos.length === 0 && pasados.length === 0) {
+    lista.innerHTML = '<div class="card"><div class="empty">No hay eventos publicados todavía.</div></div>';
+    return;
+  }
+
+  let html = '';
+  if (proximos.length > 0) {
+    html += `<div class="card"><strong style="font-size:14px;color:var(--navy)">Próximos eventos</strong><div style="margin-top:8px">${proximos.map(renderEvento).join('')}</div></div>`;
+  }
+  if (pasados.length > 0) {
+    html += `<div class="card" style="margin-top:14px"><strong style="font-size:14px;color:var(--text-muted)">Eventos pasados</strong><div style="margin-top:8px">${pasados.map(renderEvento).join('')}</div></div>`;
+  }
+  lista.innerHTML = html;
+  actualizarBadgeCalendario();
+}
+
+/* =====================================================================
+   RESUMEN DE ASISTENCIA POR CATEGORÍA
+   ===================================================================== */
+function renderResumenCategoria() {
+  const mesStr = document.getElementById('rescat-mes').value;
+  const body = document.getElementById('rescat-body');
+  if (!mesStr) { body.innerHTML = '<div class="empty">Selecciona un mes para ver el resumen.</div>'; return; }
+
+  // Mes anterior para comparativa de tendencia
+  const [y, m] = mesStr.split('-').map(Number);
+  const mesAnteriorDate = new Date(y, m - 2, 1);
+  const mesAnteriorStr = `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth()+1).padStart(2,'0')}`;
+
+  const { desde: desdeMes, hasta: hastaMes } = rangoMes(mesStr);
+  const { desde: desdeAnt, hasta: hastaAnt } = rangoMes(mesAnteriorStr);
+
+  const fmtMes = (ym) => {
+    const [yy, mm] = ym.split('-');
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    return meses[parseInt(mm)-1] + ' ' + yy;
+  };
+
+  const categorias = [...new Set(atletas.filter(a => a.estado === 'activo' && a.categoria).map(a => a.categoria))].sort();
+
+  if (categorias.length === 0) { body.innerHTML = '<div class="empty">No hay atletas activos con categoría asignada.</div>'; return; }
+
+  const datos = categorias.map(cat => {
+    const lista = atletas.filter(a => a.estado === 'activo' && a.categoria === cat);
+    if (lista.length === 0) return null;
+    const pctsActual = lista.map(a => calcularPorcentaje(a.id, desdeMes, hastaMes).pct).filter(p => p !== null);
+    const pctsAnterior = lista.map(a => calcularPorcentaje(a.id, desdeAnt, hastaAnt).pct).filter(p => p !== null);
+    const promActual = pctsActual.length ? Math.round(pctsActual.reduce((s,p)=>s+p,0) / pctsActual.length) : null;
+    const promAnterior = pctsAnterior.length ? Math.round(pctsAnterior.reduce((s,p)=>s+p,0) / pctsAnterior.length) : null;
+    return { cat, atletas: lista.length, promActual, promAnterior };
+  }).filter(Boolean);
+
+  if (datos.length === 0) { body.innerHTML = '<div class="empty">No hay registros de asistencia para este mes.</div>'; return; }
+
+  const maxPct = Math.max(...datos.map(d => d.promActual || 0), 1);
+
+  const tendencia = (actual, anterior) => {
+    if (actual === null || anterior === null) return '';
+    const diff = actual - anterior;
+    if (diff > 2) return `<span style="color:var(--ok);font-size:12px">▲ +${diff}%</span>`;
+    if (diff < -2) return `<span style="color:var(--red);font-size:12px">▼ ${diff}%</span>`;
+    return `<span style="color:var(--text-muted);font-size:12px">→ ${diff > 0 ? '+' : ''}${diff}%</span>`;
+  };
+
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;color:var(--text-muted)">
+      <span>Comparando <strong style="color:var(--navy)">${fmtMes(mesStr)}</strong> con ${fmtMes(mesAnteriorStr)}</span>
+    </div>
+    ${datos.sort((a,b) => (b.promActual||0) - (a.promActual||0)).map(d => `
+    <div style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div>
+          <span style="font-weight:600;font-size:14px">${esc(d.cat)}</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:8px">${d.atletas} atleta${d.atletas!==1?'s':''}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${tendencia(d.promActual, d.promAnterior)}
+          <span style="font-size:18px;font-weight:700;color:var(--navy)">${d.promActual !== null ? d.promActual + '%' : '—'}</span>
+        </div>
+      </div>
+      <div style="height:12px;background:var(--bg);border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:${d.promActual !== null ? Math.round((d.promActual/100)*100) : 0}%;background:${d.promActual >= 75 ? 'var(--ok)' : d.promActual >= 50 ? '#d4a13d' : 'var(--red)'};border-radius:6px;transition:width .4s"></div>
+      </div>
+      ${d.promAnterior !== null ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">Mes anterior: ${d.promAnterior}%</div>` : ''}
+    </div>`).join('')}
+  `;
 }
 
 initAuth();
