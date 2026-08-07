@@ -686,10 +686,10 @@ tr:last-child td { border-bottom: none; }
               <div class="field"><label>Hora</label><input type="time" id="cal-nueva-hora" placeholder="Opcional"></div>
               <div class="field"><label>Tipo</label>
                 <select id="cal-nuevo-tipo">
-                  <option value="partido">⚽ Partido</option>
-                  <option value="entrenamiento">🏊 Entrenamiento especial</option>
-                  <option value="torneo">🏆 Torneo</option>
-                  <option value="otro">📌 Otro</option>
+                  <option value="partido">Partido</option>
+                  <option value="entrenamiento">Entrenamiento especial</option>
+                  <option value="torneo">Torneo</option>
+                  <option value="otro">Otro</option>
                 </select>
               </div>
             </div>
@@ -1214,7 +1214,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-06';
+const BUILD_ID = '2026-06-19-07';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -3098,7 +3098,7 @@ async function exportarAtletasPDF() {
 /* =====================================================================
    CALENDARIO DE EVENTOS
    ===================================================================== */
-const TIPO_EVENTO = { partido: '⚽ Partido', entrenamiento: '🏊 Entrenamiento especial', torneo: '🏆 Torneo', otro: '📌 Otro' };
+const TIPO_EVENTO = { partido: 'Partido', entrenamiento: 'Entrenamiento especial', torneo: 'Torneo', otro: 'Otro' };
 const COLOR_TIPO = { partido: '#1d8a4a', entrenamiento: '#1a5fa8', torneo: '#c8a020', otro: '#6b7280' };
 
 function guardarEvento() {
