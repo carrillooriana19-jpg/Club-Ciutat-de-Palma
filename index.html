@@ -678,6 +678,30 @@ tr:last-child td { border-bottom: none; }
         <div class="page-title">Calendario</div>
         <div class="page-sub">Partidos, entrenamientos especiales y eventos del club.</div>
 
+        <div class="card" style="margin-bottom:14px">
+          <div class="toolbar" style="flex-wrap:wrap;gap:8px">
+            <div class="toolbar-left" style="flex-wrap:wrap;gap:8px">
+              <select id="cal-filtro-tipo" onchange="renderCalendario()">
+                <option value="">Todos los tipos</option>
+                <option value="partido">Partido</option>
+                <option value="entrenamiento">Entrenamiento especial</option>
+                <option value="torneo">Torneo</option>
+                <option value="otro">Otro</option>
+              </select>
+              <select id="cal-filtro-cat" onchange="renderCalendario()">
+                <option value="">Todas las categorías</option>
+              </select>
+              <select id="cal-filtro-periodo" onchange="renderCalendario()">
+                <option value="">Todos los eventos</option>
+                <option value="semana">Esta semana</option>
+                <option value="finde">Este fin de semana</option>
+                <option value="mes">Este mes</option>
+                <option value="mes-sig">Mes siguiente</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div id="cal-admin-panel" style="display:none">
           <div class="card" style="margin-bottom:16px">
             <strong style="font-size:15px">Añadir evento</strong>
@@ -795,32 +819,51 @@ tr:last-child td { border-bottom: none; }
 
         <!-- PG PAGOS -->
         <div id="pg-pagos" class="pg-subsection">
+          <div class="card" style="margin-bottom:14px">
+            <strong style="font-size:14px">Modalidades de pago — Temporada 26/27</strong>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px">
+              <div style="padding:12px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px">
+                <div style="font-weight:700;color:var(--navy);margin-bottom:4px">Opción A — 3 plazos</div>
+                <div style="color:var(--text-muted)">3 × 320€ = <strong>960€</strong></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">15 sep – 5 oct · 1–15 dic · 1–15 feb</div>
+              </div>
+              <div style="padding:12px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px">
+                <div style="font-weight:700;color:var(--navy);margin-bottom:4px">Opción B — 2 plazos</div>
+                <div style="color:var(--text-muted)">2 × 475€ = <strong>950€</strong></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">15 sep – 5 oct · 1–15 feb</div>
+              </div>
+              <div style="padding:12px;border:2px solid var(--border);border-radius:var(--radius);font-size:13px">
+                <div style="font-weight:700;color:var(--navy);margin-bottom:4px">Opción C — Pago único</div>
+                <div style="color:var(--text-muted)">1 × 940€ = <strong>940€</strong></div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">1 sep – 15 oct</div>
+              </div>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary btn-sm" onclick="openModal('asignar-modalidad')">Asignar modalidad a atleta</button>
+              <button class="btn btn-sm" onclick="generarPlazosTemporada()">Generar plazos pendientes</button>
+            </div>
+          </div>
           <div class="card">
             <div class="toolbar">
               <div class="toolbar-left">
                 <input class="search-input" type="search" placeholder="Buscar atleta..." id="pg-search-pago" oninput="pagPagosPag=1;renderPgPagos()">
-                <select id="pg-filter-pago-mes" onchange="pagPagosPag=1;renderPgPagos()">
-                  <option value="">Todos los meses</option>
+                <select id="pg-filter-modalidad" onchange="pagPagosPag=1;renderPgPagos()">
+                  <option value="">Todas las modalidades</option>
+                  <option value="3plazos">3 plazos</option>
+                  <option value="2plazos">2 plazos</option>
+                  <option value="1pago">Pago único</option>
                 </select>
                 <select id="pg-filter-pago-estado" onchange="pagPagosPag=1;renderPgPagos()">
-                  <option value="">Todos</option>
+                  <option value="">Todos los estados</option>
                   <option value="pagado">Pagado</option>
                   <option value="pendiente">Pendiente</option>
                   <option value="vencido">Vencido</option>
                 </select>
               </div>
-              <div style="display:flex;gap:8px">
-                <button class="btn btn-sm" onclick="openModal('gen-pagos')">Generar mes</button>
-                <button class="btn btn-primary btn-sm" onclick="openModal('add-pago')">+ Añadir pago</button>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:12px;color:var(--text-muted)">
-              <span>Generación automática de cuotas activa desde:</span>
-              <input type="month" id="pg-inicio-cobros" onchange="setInicioCobros(this.value)" style="width:auto">
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Atleta</th><th>Mes</th><th>Importe</th><th>Estado</th><th>Fecha pago</th><th>Notas</th><th></th></tr></thead>
+                <thead><tr><th>Atleta</th><th>Modalidad</th><th>Plazo</th><th>Importe</th><th>Fecha límite</th><th>Estado</th><th>Fecha pago</th><th>Notas</th><th></th></tr></thead>
                 <tbody id="pg-body-pagos"></tbody>
               </table>
               <div class="pagination" id="pg-pag-pagos"></div>
@@ -1025,35 +1068,40 @@ tr:last-child td { border-bottom: none; }
 
 
 <!-- MODALES DE PAGOS -->
-<div class="modal-overlay" id="modal-add-pago">
-  <div class="modal">
-    <h3>Añadir pago manual</h3>
-    <div class="field"><label>Atleta *</label>
-      <select id="ap-atleta"></select>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Mes *</label><input id="ap-mes" type="month"></div>
-      <div class="field"><label>Importe (€) *</label><input id="ap-importe" type="number" min="0" oninput=""></div>
-    </div>
-    <div class="field"><label>Estado inicial</label>
-      <select id="ap-estado">
-        <option value="pagado">Pagado</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="vencido">Vencido</option>
+<div class="modal-overlay" id="modal-asignar-modalidad">
+  <div class="modal" style="width:min(580px,94vw)">
+    <h3>Asignar modalidad de pago</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Selecciona uno o varios atletas y la modalidad que han escogido para la temporada 26/27.</p>
+    <div class="field">
+      <label>Modalidad *</label>
+      <select id="am-modalidad" onchange="amPreview()">
+        <option value="3plazos">Opción A — 3 plazos de 320€ (total 960€)</option>
+        <option value="2plazos">Opción B — 2 plazos de 475€ (total 950€)</option>
+        <option value="1pago">Opción C — 1 pago único de 940€</option>
       </select>
     </div>
-    <div class="field"><label>Fecha de pago</label><input id="ap-fecha" type="date"></div>
-    <div class="field"><label>Notas</label><textarea id="ap-notas" placeholder="Opcional..."></textarea></div>
+    <div id="am-preview" style="font-size:13px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px"></div>
+    <div class="field">
+      <label>Atletas *</label>
+      <div style="display:flex;gap:8px;margin-bottom:6px">
+        <input type="search" id="am-buscar" placeholder="Buscar..." oninput="amFiltrarAtletas()" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
+        <button class="btn btn-sm" onclick="amSeleccionarTodos()">Todos</button>
+        <button class="btn btn-sm" onclick="amDeseleccionarTodos()">Ninguno</button>
+      </div>
+      <div id="am-lista-atletas" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px"></div>
+      <div id="am-conteo" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+    </div>
+    <div class="login-error" id="am-error"></div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal('add-pago')">Cancelar</button>
-      <button class="btn btn-primary" onclick="addPagoPag()">Guardar</button>
+      <button class="btn" onclick="closeModal('asignar-modalidad')">Cancelar</button>
+      <button class="btn btn-primary" onclick="asignarModalidad()">Crear plazos</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="modal-edit-pago">
   <div class="modal">
-    <h3>Editar pago</h3>
+    <h3>Editar plazo</h3>
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px"><strong id="ep-atleta-nombre"></strong> · <span id="ep-mes-label"></span></p>
     <div class="field-row">
       <div class="field"><label>Importe (€)</label><input id="ep-importe" type="number" min="0"></div>
@@ -1065,28 +1113,12 @@ tr:last-child td { border-bottom: none; }
         </select>
       </div>
     </div>
-    <div class="field"><label>Fecha de pago</label><input id="ep-fecha" type="date"></div>
-    <div class="field"><label>Notas</label><textarea id="ep-notas" placeholder="Pagó 5€ de más, se queda a cuenta..."></textarea></div>
+    <div class="field"><label>Fecha de pago efectivo</label><input id="ep-fecha" type="date"></div>
+    <div class="field"><label>Notas</label><textarea id="ep-notas" placeholder="Pagó en efectivo, transferencia recibida..."></textarea></div>
     <input type="hidden" id="ep-id">
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('edit-pago')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEditPagoPag()">Guardar cambios</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-gen-pagos">
-  <div class="modal">
-    <h3>Generar recibos del mes</h3>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Crea automáticamente un recibo para cada atleta activo que paga cuota en el mes seleccionado. No duplica los que ya existen.</p>
-    <div class="field"><label>Mes</label><input id="gp-mes" type="month" oninput="gpPreview()"></div>
-    <div class="field"><label>Estado inicial</label>
-      <select id="gp-estado"><option value="pendiente">Pendiente</option><option value="vencido">Vencido</option></select>
-    </div>
-    <div id="gp-preview" style="font-size:13px;color:var(--text-muted);margin-top:4px;padding:10px;background:var(--bg);border-radius:var(--radius-sm)"></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('gen-pagos')">Cancelar</button>
-      <button class="btn btn-primary" onclick="generarPagosMes()">Generar recibos</button>
     </div>
   </div>
 </div>
@@ -1214,7 +1246,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-07';
+const BUILD_ID = '2026-06-19-10';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1655,24 +1687,11 @@ function openModal(id) {
     renderNeqListaAtletas();
   }
   // Modales de Pagos
-  if (id === 'add-pago') {
-    const sel = document.getElementById('ap-atleta');
-    if (sel) {
-      sel.innerHTML = atletas.filter(a=>a.estado==='activo').sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(a=>`<option value="${a.id}">${esc(a.nombre)}</option>`).join('');
-      const a0 = atletas.find(x=>x.estado==='activo');
-      if (a0) { sel.value=a0.id; const imp=document.getElementById('ap-importe'); if(imp) imp.value=a0.cuota||45; }
-      sel.onchange = () => { const a=atletas.find(x=>x.id===parseInt(sel.value)); if(a){ const imp=document.getElementById('ap-importe'); if(imp) imp.value=a.cuota||45; } };
-    }
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('ap-mes').value = mesActualStr();
-    document.getElementById('ap-fecha').value = today;
-    document.getElementById('ap-notas').value = '';
-    document.getElementById('ap-estado').value = 'pagado';
-  }
-  if (id === 'gen-pagos') {
-    const gm=document.getElementById('gp-mes'); if(gm) gm.value=mesActualStr();
-    const ge=document.getElementById('gp-estado'); if(ge) ge.value='pendiente';
-    if(typeof gpPreview==='function') gpPreview();
+  if (id === 'asignar-modalidad') {
+    document.getElementById('am-buscar').value = '';
+    const err = document.getElementById('am-error'); if(err) err.textContent='';
+    amPreview();
+    amFiltrarAtletas();
   }
   if (id === 'nuevo-cargo') {
     const nc=document.getElementById('nc-concepto'); if(nc) nc.value='';
@@ -2556,7 +2575,7 @@ function showPagosSubTab(id, btn) {
   document.getElementById(id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'pg-resumen') renderPgResumen();
-  else if (id === 'pg-pagos') { initPgMeses(); renderPgPagos(); }
+  else if (id === 'pg-pagos') { renderPgPagos(); }
   else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
 }
@@ -2566,7 +2585,7 @@ function refrescarVistasPagos() {
   if (!activo) { updatePagosNavBadge(); return; }
   const id = activo.id;
   if (id === 'pg-resumen') renderPgResumen();
-  else if (id === 'pg-pagos') { initPgMeses(); renderPgPagos(); }
+  else if (id === 'pg-pagos') { renderPgPagos(); }
   else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
   updatePagosNavBadge();
@@ -2630,46 +2649,158 @@ function mesActualStr() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 
-function initPgMeses() {
-  const sel = document.getElementById('pg-filter-pago-mes'); if (!sel) return;
-  const cur = sel.value;
-  const meses = [...new Set(pagos.map(p=>p.mes))].sort().reverse();
-  sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>`<option value="${m}">${fmtMesPag(m)}</option>`).join('');
-  if (cur && meses.includes(cur)) sel.value = cur;
-  // Rellenar input inicio-cobros
-  const ic = document.getElementById('pg-inicio-cobros'); if (ic) ic.value = inicioCobros();
+// Definición de modalidades y sus plazos — Temporada 26/27
+const MODALIDADES = {
+  '3plazos': {
+    label: 'Opción A — 3 plazos',
+    plazos: [
+      { num: 1, label: '1er plazo', importe: 320, fechaLimite: '2026-10-05' },
+      { num: 2, label: '2º plazo',  importe: 320, fechaLimite: '2026-12-15' },
+      { num: 3, label: '3er plazo', importe: 320, fechaLimite: '2027-02-15' }
+    ]
+  },
+  '2plazos': {
+    label: 'Opción B — 2 plazos',
+    plazos: [
+      { num: 1, label: '1er plazo', importe: 475, fechaLimite: '2026-10-05' },
+      { num: 2, label: '2º plazo',  importe: 475, fechaLimite: '2027-02-15' }
+    ]
+  },
+  '1pago': {
+    label: 'Opción C — Pago único',
+    plazos: [
+      { num: 1, label: 'Pago único', importe: 940, fechaLimite: '2026-10-15' }
+    ]
+  }
+};
+
+function amFiltrarAtletas() {
+  const q = (document.getElementById('am-buscar')?.value||'').toLowerCase();
+  const lista = atletas.filter(a => a.estado==='activo').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const filtrados = q ? lista.filter(a => a.nombre.toLowerCase().includes(q)) : lista;
+  const cont = document.getElementById('am-lista-atletas'); if (!cont) return;
+  cont.innerHTML = filtrados.map(a => {
+    const tieneYa = pagos.some(p => p.atletaId===a.id && p.temporada==='26-27');
+    return `<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;font-size:13px;cursor:pointer;border-radius:4px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" id="amck-${a.id}" value="${a.id}" onchange="amActualizarConteo()" ${tieneYa?'':''}>
+      <span>${esc(a.nombre)}</span>
+      ${tieneYa ? '<span style="font-size:11px;color:var(--gold);margin-left:auto">ya asignado</span>' : ''}
+    </label>`;
+  }).join('') || '<div style="color:var(--text-muted);font-size:13px;padding:6px">Sin resultados.</div>';
+  amActualizarConteo();
+}
+
+function amSeleccionarTodos() {
+  document.querySelectorAll('#am-lista-atletas input[type=checkbox]').forEach(cb => cb.checked = true);
+  amActualizarConteo();
+}
+function amDeseleccionarTodos() {
+  document.querySelectorAll('#am-lista-atletas input[type=checkbox]').forEach(cb => cb.checked = false);
+  amActualizarConteo();
+}
+function amActualizarConteo() {
+  const n = document.querySelectorAll('#am-lista-atletas input[type=checkbox]:checked').length;
+  const el = document.getElementById('am-conteo'); if (el) el.textContent = n === 0 ? 'Ningún atleta seleccionado.' : `${n} atleta${n!==1?'s':''} seleccionado${n!==1?'s':''}.`;
+}
+
+function amPreview() {
+  const mod = document.getElementById('am-modalidad')?.value;
+  const prev = document.getElementById('am-preview'); if (!prev) return;
+  const m = MODALIDADES[mod]; if (!m) return;
+  prev.innerHTML = m.plazos.map(p =>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span>${p.label}</span>
+      <span><strong>${p.importe}€</strong> · límite ${fmtFPag(p.fechaLimite)}</span>
+    </div>`
+  ).join('') + `<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Total: <strong>${m.plazos.reduce((s,p)=>s+p.importe,0)}€</strong></div>`;
+}
+
+function asignarModalidad() {
+  const mod = document.getElementById('am-modalidad').value;
+  const err = document.getElementById('am-error');
+  const seleccionados = [...document.querySelectorAll('#am-lista-atletas input[type=checkbox]:checked')].map(cb => parseInt(cb.value));
+  if (seleccionados.length === 0) { err.textContent = 'Selecciona al menos un atleta.'; return; }
+  err.textContent = '';
+  const m = MODALIDADES[mod]; if (!m) return;
+  seleccionados.forEach(atletaId => {
+    pagos = pagos.filter(p => !(p.atletaId === atletaId && p.temporada === '26-27'));
+    m.plazos.forEach(plazo => {
+      pagos.push({ id: nextIdPagos++, atletaId, temporada: '26-27', modalidad: mod, plazo: plazo.num, label: plazo.label, importe: plazo.importe, fechaLimite: plazo.fechaLimite, estado: 'pendiente', fecha: null, notas: '' });
+    });
+  });
+  save();
+  closeModal('asignar-modalidad');
+  renderPgPagos();
+  renderPgResumen();
+}
+
+function generarPlazosTemporada() {
+  // Genera plazos para atletas que ya tengan modalidad asignada en el atleta
+  // pero que aún no tienen sus plazos creados en pagos[]
+  let creados = 0;
+  atletas.filter(a => a.estado === 'activo' && a.modalidadPago).forEach(a => {
+    const mod = a.modalidadPago;
+    const m = MODALIDADES[mod]; if (!m) return;
+    const tieneAlgo = pagos.some(p => p.atletaId === a.id && p.temporada === '26-27');
+    if (!tieneAlgo) {
+      m.plazos.forEach(plazo => {
+        pagos.push({ id: nextIdPagos++, atletaId: a.id, temporada: '26-27', modalidad: mod, plazo: plazo.num, label: plazo.label, importe: plazo.importe, fechaLimite: plazo.fechaLimite, estado: 'pendiente', fecha: null, notas: '' });
+        creados++;
+      });
+    }
+  });
+  if (creados > 0) { save(); renderPgPagos(); alert(`Se crearon ${creados} plazos nuevos.`); }
+  else alert('No hay atletas pendientes de generar plazos (o no tienen modalidad asignada en su perfil).');
 }
 
 function renderPgPagos() {
-  initPgMeses();
-  const q = (document.getElementById('pg-search-pago').value||'').toLowerCase();
-  const fm = document.getElementById('pg-filter-pago-mes').value;
-  const fe = document.getElementById('pg-filter-pago-estado').value;
+  const q = (document.getElementById('pg-search-pago')?.value||'').toLowerCase();
+  const fm = document.getElementById('pg-filter-modalidad')?.value || '';
+  const fe = document.getElementById('pg-filter-pago-estado')?.value || '';
+  const hoy = new Date().toISOString().split('T')[0];
+  // Auto-marcar como vencido si pasó la fecha límite y sigue pendiente
+  let cambioVencido = false;
+  pagos.forEach(p => {
+    if ((p.estado === 'pendiente') && p.fechaLimite && p.fechaLimite < hoy) {
+      p.estado = 'vencido'; cambioVencido = true;
+    }
+  });
+  if (cambioVencido) save();
+
   let lista = pagos.filter(p => {
-    if (fm && p.mes!==fm) return false;
-    if (fe && p.estado!==fe) return false;
-    const a = atletas.find(x=>x.id===p.atletaId);
+    if (fm && p.modalidad !== fm) return false;
+    if (fe && p.estado !== fe) return false;
+    const a = atletas.find(x => x.id === p.atletaId);
     if (q && a && !a.nombre.toLowerCase().includes(q)) return false;
     return true;
-  }).sort((a,b) => b.mes.localeCompare(a.mes)||a.atletaId-b.atletaId);
+  }).sort((a,b) => {
+    const na = atletas.find(x=>x.id===a.atletaId)?.nombre||'';
+    const nb = atletas.find(x=>x.id===b.atletaId)?.nombre||'';
+    return na.localeCompare(nb) || (a.plazo||0)-(b.plazo||0);
+  });
+
   const total = lista.length, pages = Math.ceil(total/PER_PAGOS)||1;
   if (pagPagosPag > pages) pagPagosPag = 1;
   const slice = lista.slice((pagPagosPag-1)*PER_PAGOS, pagPagosPag*PER_PAGOS);
   const body = document.getElementById('pg-body-pagos'); if (!body) return;
-  body.innerHTML = slice.length===0 ? '<tr><td colspan="7"><div class="empty">Sin pagos registrados</div></td></tr>'
+  body.innerHTML = slice.length === 0
+    ? '<tr><td colspan="9"><div class="empty">Sin plazos registrados. Usa "Asignar modalidad" para crear los plazos de cada atleta.</div></td></tr>'
     : slice.map(p => {
       const a = atletas.find(x=>x.id===p.atletaId);
-      const toggleBtn = p.estado==='pagado'
-        ? `<button class="btn btn-sm btn-success" onclick="togglePagoPag(${p.id})" title="Marcar como no pagado" style="font-size:11px">✓ Pagó</button>`
-        : `<button class="btn btn-sm btn-danger" onclick="togglePagoPag(${p.id})" title="Marcar como pagado" style="font-size:11px">✕ No pagó</button>`;
+      const mod = MODALIDADES[p.modalidad];
+      const toggleBtn = p.estado === 'pagado'
+        ? `<button class="btn btn-sm btn-success" onclick="togglePagoPag(${p.id})" style="font-size:11px">✓ Pagado</button>`
+        : `<button class="btn btn-sm btn-danger" onclick="togglePagoPag(${p.id})" style="font-size:11px">✕ Pendiente</button>`;
       return `<tr>
         <td style="font-weight:500">${esc(a?a.nombre:'—')}</td>
-        <td>${esc(fmtMesPag(p.mes))}</td>
+        <td style="font-size:12px">${esc(mod?mod.label:p.modalidad||'—')}</td>
+        <td style="font-size:12px">${esc(p.label||('Plazo '+p.plazo))}</td>
         <td><strong>${p.importe}€</strong></td>
+        <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(p.fechaLimite)}</td>
         <td>${badgePP(p.estado)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(p.fecha)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${esc(p.notas||'')}</td>
-        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditPagoPag(${p.id})" title="Editar">✏</button></td>
+        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditPagoPag(${p.id})">✏</button></td>
       </tr>`;
     }).join('');
   renderPgPaginador('pg-pag-pagos', pagPagosPag, pages, p => { pagPagosPag=p; renderPgPagos(); }, total);
@@ -2677,90 +2808,24 @@ function renderPgPagos() {
 
 function renderPgAlertas() {
   const alerts = [];
+  const hoy = new Date().toISOString().split('T')[0];
   pagos.filter(p => p.estado==='vencido').forEach(p => {
     const a = atletas.find(x=>x.id===p.atletaId);
-    if (a && a.estado==='activo') alerts.push({ tipo:'danger', txt:`Pago vencido — <strong>${esc(a.nombre)}</strong> — ${fmtMesPag(p.mes)} — ${p.importe}€` });
+    if (a && a.estado==='activo') alerts.push({ tipo:'danger', txt:`Plazo vencido — <strong>${esc(a.nombre)}</strong> — ${esc(p.label||'Plazo')} — ${p.importe}€ (límite ${fmtFPag(p.fechaLimite)})` });
   });
   pagos.filter(p => p.estado==='pendiente').forEach(p => {
     const a = atletas.find(x=>x.id===p.atletaId);
-    if (a && a.estado==='activo') alerts.push({ tipo:'warn', txt:`Pago pendiente — <strong>${esc(a.nombre)}</strong> — ${fmtMesPag(p.mes)} — ${p.importe}€` });
+    if (a && a.estado==='activo') {
+      const diasRestantes = p.fechaLimite ? Math.ceil((new Date(p.fechaLimite)-new Date())/(1000*60*60*24)) : null;
+      const urgente = diasRestantes !== null && diasRestantes <= 7;
+      alerts.push({ tipo: urgente ? 'danger' : 'warn', txt:`Pago pendiente — <strong>${esc(a.nombre)}</strong> — ${esc(p.label||'Plazo')} — ${p.importe}€${diasRestantes !== null ? ` (${diasRestantes} días)` : ''}` });
+    }
   });
   const el = document.getElementById('pg-lista-alertas'); if (!el) return;
-  el.innerHTML = alerts.length ? alerts.map(al => `<div style="padding:8px 10px;margin-bottom:6px;border-radius:var(--radius-sm);background:${al.tipo==='danger'?'#fbe9e8':'#fdf3d9'};font-size:13px">${al.txt}</div>`).join('')
+  el.innerHTML = alerts.length
+    ? alerts.map(al => `<div style="padding:8px 10px;margin-bottom:6px;border-radius:var(--radius-sm);background:${al.tipo==='danger'?'#fbe9e8':'#fdf3d9'};font-size:13px">${al.txt}</div>`).join('')
     : '<div style="color:var(--text-muted);font-size:13px">Sin alertas activas.</div>';
   updatePagosNavBadge();
-}
-
-function initFiltroPgCargos() {
-  const sel = document.getElementById('pg-filter-cargo'); if (!sel) return;
-  const cur = sel.value;
-  const conceptos = [...new Set(cargos.map(c=>c.concepto))];
-  sel.innerHTML = '<option value="">Todos los conceptos</option>' + conceptos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  if (cur) sel.value = cur;
-  // poblar categorías en nc-categoria
-  const nc = document.getElementById('nc-categoria'); if (nc) {
-    nc.innerHTML = '<option value="__sin__">Sin categoría asignada</option>';
-    CATEGORIAS_FIJAS.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; nc.appendChild(o); });
-  }
-}
-
-function renderPgCargos() {
-  initFiltroPgCargos();
-  const q = (document.getElementById('pg-search-cargo').value||'').toLowerCase();
-  const fc = document.getElementById('pg-filter-cargo').value;
-  const fe = document.getElementById('pg-filter-cargo-estado').value;
-  let lista = cargoPagos.filter(cp => {
-    if (fe && cp.estado!==fe) return false;
-    const cargo = cargos.find(c=>c.id===cp.cargoId);
-    if (fc && (!cargo || cargo.concepto!==fc)) return false;
-    const a = atletas.find(x=>x.id===cp.atletaId);
-    if (q && a && !a.nombre.toLowerCase().includes(q)) return false;
-    return true;
-  }).sort((a,b)=>a.atletaId-b.atletaId);
-  const total = lista.length, pages = Math.ceil(total/PER_PAGOS)||1;
-  if (pagCargosPag > pages) pagCargosPag = 1;
-  const slice = lista.slice((pagCargosPag-1)*PER_PAGOS, pagCargosPag*PER_PAGOS);
-  const body = document.getElementById('pg-body-cargos'); if (!body) return;
-  body.innerHTML = slice.length===0 ? '<tr><td colspan="7"><div class="empty">Sin conceptos de pago único</div></td></tr>'
-    : slice.map(cp => {
-      const a = atletas.find(x=>x.id===cp.atletaId);
-      const cargo = cargos.find(c=>c.id===cp.cargoId);
-      const toggleBtn = cp.estado==='pagado'
-        ? `<button class="btn btn-sm btn-success" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✓ Pagó</button>`
-        : `<button class="btn btn-sm btn-danger" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✕ No pagó</button>`;
-      return `<tr>
-        <td style="font-weight:500">${esc(a?a.nombre:'—')}</td>
-        <td>${esc(cargo?cargo.concepto:'—')}</td>
-        <td><strong>${cp.importe}€</strong></td>
-        <td>${badgePP(cp.estado)}</td>
-        <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(cp.fecha)}</td>
-        <td style="font-size:12px;color:var(--text-muted)">${esc(cp.notas||'')}</td>
-        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditCargoPag(${cp.id})" title="Editar">✏</button></td>
-      </tr>`;
-    }).join('');
-  renderPgPaginador('pg-pag-cargos', pagCargosPag, pages, p => { pagCargosPag=p; renderPgCargos(); }, total);
-}
-
-function renderPgPaginador(elId, cur, total, cb, count) {
-  const el = document.getElementById(elId); if (!el) return;
-  if (total<=1) { el.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">${count} registros</span>`; return; }
-  el.innerHTML = `<button class="btn btn-sm" ${cur<=1?'disabled':''} onclick="(${cb.toString()})(${cur-1})">← Anterior</button>
-    <span style="font-size:12px;color:var(--text-muted)">Pág. ${cur}/${total}</span>
-    <button class="btn btn-sm" ${cur>=total?'disabled':''} onclick="(${cb.toString()})(${cur+1})">Siguiente →</button>
-    <span style="font-size:12px;color:var(--text-muted)">${count} registros</span>`;
-}
-
-// --- Acciones pagos mensuales ---
-function addPagoPag() {
-  const atletaId = parseInt(document.getElementById('ap-atleta').value);
-  const mes = document.getElementById('ap-mes').value;
-  const imp = parseFloat(document.getElementById('ap-importe').value);
-  if (!atletaId || !mes || isNaN(imp)) return;
-  const id = nextIdPagos++;
-  pagos.push({ id, atletaId, mes, importe: imp, estado: document.getElementById('ap-estado').value, fecha: document.getElementById('ap-fecha').value || null, notas: document.getElementById('ap-notas').value.trim() });
-  save();
-  closeModal('add-pago');
-  renderPgPagos();
 }
 
 function togglePagoPag(id) {
@@ -2774,7 +2839,7 @@ function openEditPagoPag(id) {
   const p = pagos.find(x=>x.id===id); if (!p) return;
   const a = atletas.find(x=>x.id===p.atletaId);
   document.getElementById('ep-atleta-nombre').textContent = a?a.nombre:'?';
-  document.getElementById('ep-mes-label').textContent = fmtMesPag(p.mes);
+  document.getElementById('ep-mes-label').textContent = (p.label||'Plazo') + ' · ' + (MODALIDADES[p.modalidad]?.label||p.modalidad||'');
   document.getElementById('ep-importe').value = p.importe;
   document.getElementById('ep-estado').value = p.estado;
   document.getElementById('ep-fecha').value = p.fecha || '';
@@ -2793,41 +2858,66 @@ function saveEditPagoPag() {
   save(); closeModal('edit-pago'); renderPgPagos();
 }
 
-function gpPreview() {
-  const mes = document.getElementById('gp-mes').value;
-  const prev = document.getElementById('gp-preview'); if (!prev) return;
-  if (!mes) { prev.textContent = 'Selecciona un mes.'; return; }
-  const activos = atletas.filter(a=>a.estado==='activo'&&a.paga!==false);
-  const existentes = new Set(pagos.filter(p=>p.mes===mes).map(p=>p.atletaId));
-  const nuevos = activos.filter(a=>!existentes.has(a.id));
-  prev.textContent = `Se crearán ${nuevos.length} recibos (${activos.length - nuevos.length} ya existen).`;
+// Poblar select de atletas en modal asignar-modalidad — la lógica de init está en openModal()
+
+// --- Cargos / Pagos únicos ---
+function initFiltroPgCargos() {
+  const sel = document.getElementById('pg-filter-cargo'); if (!sel) return;
+  const cur = sel.value;
+  const conceptos = [...new Set(cargos.map(c=>c.concepto))];
+  sel.innerHTML = '<option value="">Todos los conceptos</option>' + conceptos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if (cur) sel.value = cur;
+  const nc = document.getElementById('nc-categoria'); if (nc) {
+    nc.innerHTML = '<option value="__sin__">Sin categoría asignada</option>';
+    CATEGORIAS_FIJAS.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; nc.appendChild(o); });
+  }
 }
 
-function generarPagosMes() {
-  const mes = document.getElementById('gp-mes').value;
-  if (!mes) return;
-  const estado = document.getElementById('gp-estado').value;
-  const activos = atletas.filter(a=>a.estado==='activo'&&a.paga!==false);
-  const existentes = new Set(pagos.filter(p=>p.mes===mes).map(p=>p.atletaId));
-  let creados = 0;
-  activos.filter(a=>!existentes.has(a.id)).forEach(a => {
-    pagos.push({ id: nextIdPagos++, atletaId: a.id, mes, importe: a.cuota||45, estado, fecha: null, notas: '' });
-    creados++;
-  });
-  if (creados > 0) save();
-  closeModal('gen-pagos');
-  renderPgPagos();
+function renderPgCargos() {
+  initFiltroPgCargos();
+  const q = (document.getElementById('pg-search-cargo')?.value||'').toLowerCase();
+  const fc = document.getElementById('pg-filter-cargo')?.value||'';
+  const fe = document.getElementById('pg-filter-cargo-estado')?.value||'';
+  let lista = cargoPagos.filter(cp => {
+    if (fe && cp.estado!==fe) return false;
+    const cargo = cargos.find(c=>c.id===cp.cargoId);
+    if (fc && (!cargo || cargo.concepto!==fc)) return false;
+    const a = atletas.find(x=>x.id===cp.atletaId);
+    if (q && a && !a.nombre.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a,b) => { const na=atletas.find(x=>x.id===a.atletaId)?.nombre||''; const nb=atletas.find(x=>x.id===b.atletaId)?.nombre||''; return na.localeCompare(nb); });
+  const total = lista.length, pages = Math.ceil(total/PER_PAGOS)||1;
+  if (pagCargosPag > pages) pagCargosPag = 1;
+  const slice = lista.slice((pagCargosPag-1)*PER_PAGOS, pagCargosPag*PER_PAGOS);
+  const body = document.getElementById('pg-body-cargos'); if (!body) return;
+  body.innerHTML = slice.length===0 ? '<tr><td colspan="7"><div class="empty">Sin conceptos de pago único</div></td></tr>'
+    : slice.map(cp => {
+      const a = atletas.find(x=>x.id===cp.atletaId);
+      const cargo = cargos.find(c=>c.id===cp.cargoId);
+      const toggleBtn = cp.estado==='pagado'
+        ? `<button class="btn btn-sm btn-success" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✓ Pagó</button>`
+        : `<button class="btn btn-sm btn-danger" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✕ Pendiente</button>`;
+      return `<tr><td style="font-weight:500">${esc(a?a.nombre:'—')}</td><td>${esc(cargo?cargo.concepto:'—')}</td><td><strong>${cp.importe}€</strong></td><td>${badgePP(cp.estado)}</td><td style="font-size:12px;color:var(--text-muted)">${fmtFPag(cp.fecha)}</td><td style="font-size:12px;color:var(--text-muted)">${esc(cp.notas||'')}</td><td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditCargoPag(${cp.id})">✏</button></td></tr>`;
+    }).join('');
+  renderPgPaginador('pg-pag-cargos', pagCargosPag, pages, p => { pagCargosPag=p; renderPgCargos(); }, total);
 }
 
-// Poblar select de atletas en modal add-pago — la lógica de init está en openModal() principal
+function renderPgPaginador(elId, cur, total, cb, count) {
+  const el = document.getElementById(elId); if (!el) return;
+  if (total<=1) { el.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">${count} registros</span>`; return; }
+  el.innerHTML = `<button class="btn btn-sm" ${cur<=1?'disabled':''} onclick="(${cb.toString()})(${cur-1})">← Anterior</button>
+    <span style="font-size:12px;color:var(--text-muted)">Pág. ${cur}/${total}</span>
+    <button class="btn btn-sm" ${cur>=total?'disabled':''} onclick="(${cb.toString()})(${cur+1})">Siguiente →</button>
+    <span style="font-size:12px;color:var(--text-muted)">${count} registros</span>`;
+}
 
-// --- Acciones cargos/pagos únicos ---
 function toggleCargoPag(id) {
   const cp = cargoPagos.find(x=>x.id===id); if (!cp) return;
   if (cp.estado==='pagado') { cp.estado='pendiente'; cp.fecha=null; }
   else { cp.estado='pagado'; cp.fecha=new Date().toISOString().split('T')[0]; }
   save(); renderPgCargos();
 }
+
 
 function openEditCargoPag(id) {
   const cp = cargoPagos.find(x=>x.id===id); if (!cp) return;
@@ -3149,9 +3239,61 @@ function renderCalendario() {
   const panel = document.getElementById('cal-admin-panel');
   if (panel) panel.style.display = esAdmin ? '' : 'none';
 
-  const hoy = new Date().toISOString().split('T')[0];
-  const proximos = eventos.filter(e => e.fecha >= hoy).sort((a,b) => a.fecha.localeCompare(b.fecha));
-  const pasados = eventos.filter(e => e.fecha < hoy).sort((a,b) => b.fecha.localeCompare(a.fecha));
+  // Poblar select de categorías con las que existen en eventos
+  const selCat = document.getElementById('cal-filtro-cat');
+  if (selCat) {
+    const curCat = selCat.value;
+    const cats = [...new Set(eventos.filter(e => e.categorias).map(e => e.categorias.split(',').map(c=>c.trim())).flat().filter(Boolean))].sort();
+    selCat.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${esc(c)}"${curCat===c?' selected':''}>${esc(c)}</option>`).join('');
+  }
+
+  const filtroTipo = document.getElementById('cal-filtro-tipo')?.value || '';
+  const filtroCat = document.getElementById('cal-filtro-cat')?.value || '';
+  const filtroPeriodo = document.getElementById('cal-filtro-periodo')?.value || '';
+
+  const hoy = new Date();
+  const hoyStr = hoy.toISOString().split('T')[0];
+
+  // Calcular rango de fechas según periodo
+  let desdeStr = null, hastaStr = null;
+  if (filtroPeriodo === 'semana') {
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - ((hoy.getDay()+6)%7));
+    const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+    desdeStr = lunes.toISOString().split('T')[0];
+    hastaStr = domingo.toISOString().split('T')[0];
+  } else if (filtroPeriodo === 'finde') {
+    const diaSemana = hoy.getDay(); // 0=dom,6=sab
+    const sabado = new Date(hoy);
+    sabado.setDate(hoy.getDate() + ((6 - diaSemana + 7) % 7));
+    const domingo = new Date(sabado); domingo.setDate(sabado.getDate() + 1);
+    desdeStr = sabado.toISOString().split('T')[0];
+    hastaStr = domingo.toISOString().split('T')[0];
+  } else if (filtroPeriodo === 'mes') {
+    desdeStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-01`;
+    const ultimo = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0);
+    hastaStr = ultimo.toISOString().split('T')[0];
+  } else if (filtroPeriodo === 'mes-sig') {
+    const sig = new Date(hoy.getFullYear(), hoy.getMonth()+1, 1);
+    desdeStr = sig.toISOString().split('T')[0];
+    const ultimoSig = new Date(hoy.getFullYear(), hoy.getMonth()+2, 0);
+    hastaStr = ultimoSig.toISOString().split('T')[0];
+  }
+
+  const filtrar = (ev) => {
+    if (filtroTipo && ev.tipo !== filtroTipo) return false;
+    if (filtroCat && ev.categorias) {
+      const cats = ev.categorias.split(',').map(c=>c.trim().toLowerCase());
+      if (!cats.includes(filtroCat.toLowerCase())) return false;
+    } else if (filtroCat && !ev.categorias) return false;
+    if (desdeStr && ev.fecha < desdeStr) return false;
+    if (hastaStr && ev.fecha > hastaStr) return false;
+    return true;
+  };
+
+  const eventosFiltrados = eventos.filter(filtrar);
+  const proximos = eventosFiltrados.filter(e => e.fecha >= hoyStr).sort((a,b) => a.fecha.localeCompare(b.fecha));
+  const pasados = eventosFiltrados.filter(e => e.fecha < hoyStr).sort((a,b) => b.fecha.localeCompare(a.fecha));
 
   const fmtFechaEvento = (f) => {
     const [y,m,d] = f.split('-');
@@ -3163,8 +3305,8 @@ function renderCalendario() {
 
   const renderEvento = (ev) => {
     const color = COLOR_TIPO[ev.tipo] || COLOR_TIPO.otro;
-    const etiqueta = TIPO_EVENTO[ev.tipo] || '📌 Otro';
-    const pasado = ev.fecha < hoy;
+    const etiqueta = TIPO_EVENTO[ev.tipo] || 'Otro';
+    const pasado = ev.fecha < hoyStr;
     return `
     <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);opacity:${pasado?'.6':'1'}">
       <div style="width:4px;min-height:60px;background:${color};border-radius:4px;flex-shrink:0"></div>
@@ -3185,7 +3327,7 @@ function renderCalendario() {
   if (!lista) return;
 
   if (proximos.length === 0 && pasados.length === 0) {
-    lista.innerHTML = '<div class="card"><div class="empty">No hay eventos publicados todavía.</div></div>';
+    lista.innerHTML = `<div class="card"><div class="empty">${eventosFiltrados.length === 0 && eventos.length > 0 ? 'Ningún evento coincide con los filtros.' : 'No hay eventos publicados todavía.'}</div></div>`;
     return;
   }
 
