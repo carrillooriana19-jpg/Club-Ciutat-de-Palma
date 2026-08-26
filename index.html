@@ -790,6 +790,7 @@ tr:last-child td { border-bottom: none; }
           <button class="pg-subnav-item" onclick="showPagosSubTab('pg-pagos',this)">Pagos</button>
           <button class="pg-subnav-item" onclick="showPagosSubTab('pg-cargos',this)">Pagos únicos</button>
           <button class="pg-subnav-item" onclick="showPagosSubTab('pg-alertas',this)">Alertas<span class="nav-badge" id="pg-alertas-badge" style="display:none"></span></button>
+          <button class="pg-subnav-item" onclick="showPagosSubTab('pg-uniforme',this)">Uniformidad</button>
         </div>
 
         <!-- PG RESUMEN -->
@@ -908,6 +909,26 @@ tr:last-child td { border-bottom: none; }
           </div>
         </div>
 
+        <!-- UNIFORMIDAD -->
+        <div id="pg-uniforme" class="pg-subsection">
+          <div class="card" style="margin-bottom:14px">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <input type="search" id="unif-buscar" placeholder="Buscar atleta..." oninput="renderUniformidad()" class="search-input">
+                <select id="unif-filtro-estado" onchange="renderUniformidad()">
+                  <option value="">Todos</option>
+                  <option value="pendiente">Pendiente pago o entrega</option>
+                  <option value="pagado">Pagado</option>
+                  <option value="entregado">Entregado</option>
+                  <option value="completo">Pagado y entregado</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="openModal('nuevo-pedido-unif')">+ Nuevo pedido</button>
+            </div>
+          </div>
+          <div id="unif-lista"></div>
+        </div>
+
       </div>
 
     </div>
@@ -915,6 +936,26 @@ tr:last-child td { border-bottom: none; }
 </div>
 
 <!-- MODAL: nuevo / editar entrenador -->
+<div class="modal-overlay" id="modal-nuevo-pedido-unif">
+  <div class="modal" style="width:min(580px,94vw)">
+    <h3>Nuevo pedido de uniformidad</h3>
+    <div class="field"><label>Atleta *</label>
+      <select id="unif-atleta" onchange="unifActualizarTotal()"></select>
+    </div>
+    <div style="margin:14px 0 8px;font-size:13px;font-weight:600;color:var(--navy)">Prendas solicitadas</div>
+    <div id="unif-prendas-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--navy);color:#fff;border-radius:var(--radius);margin-bottom:12px">
+      <span style="font-size:14px;font-weight:600">Total del pedido</span>
+      <span style="font-size:20px;font-weight:700" id="unif-total-display">0€</span>
+    </div>
+    <div class="field"><label>Notas adicionales</label><textarea id="unif-notas" placeholder="Talla, color especial, observaciones..."></textarea></div>
+    <div class="login-error" id="unif-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('nuevo-pedido-unif')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPedidoUnif()">Crear pedido</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-nuevo-entrenador">
   <div class="modal">
     <h3 id="ne-titulo">Nuevo entrenador</h3>
@@ -1139,7 +1180,7 @@ tr:last-child td { border-bottom: none; }
       <select id="nc-aplicar-a" onchange="ncTogglePersonalizado()">
         <option value="todos">Todos los atletas activos</option>
         <option value="categoria">Solo una categoría</option>
-        <option value="personalizado">Selección personalizada (marcar exentos)</option>
+        <option value="personalizado">Selección individual (elige quién lo paga)</option>
       </select>
     </div>
     <div class="field" id="nc-cat-wrap" style="display:none">
@@ -1149,7 +1190,7 @@ tr:last-child td { border-bottom: none; }
       </select>
     </div>
     <div class="field" id="nc-personalizado-wrap" style="display:none">
-      <label>Marca quién está exento de este pago</label>
+      <label>Marca quién SÍ paga este concepto</label>
       <div id="nc-lista-atletas" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px"></div>
     </div>
     <div id="nc-preview" style="font-size:13px;color:var(--text-muted);margin:10px 0;padding:10px;background:var(--bg);border-radius:var(--radius-sm)"></div>
@@ -1246,7 +1287,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-10';
+const BUILD_ID = '2026-06-19-13';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1265,7 +1306,9 @@ let syncEnabled = false, syncUnsubscribe = null, lastPushedSnapshot = null, sync
 // ---- Sección de PAGOS (solo Administración) ----
 let pagos = [], cargos = [], cargoPagos = [], nextIdPagos = 100;
 let eventos = []; // {id, fecha:'YYYY-MM-DD', hora, tipo, titulo, lugar, categorias, notas}
+let pedidosUnif = []; // {id, atletaId, prendas:{camiseta:1,...}, total, pagado:false, entregado:false, notas, fecha}
 const SK_EVENTOS = 'wpa_eventos';
+const SK_PEDIDOS_UNIF = 'wpa_pedidos_unif';
 let pagAtletasPag = 1, pagPagosPag = 1, pagCargosPag = 1;
 let bajaTargetPagos = null;
 const PER_PAGOS = 12;
@@ -1306,6 +1349,7 @@ function save() {
     localStorage.setItem(SK_CARPAG, JSON.stringify(cargoPagos));
     localStorage.setItem(SK_NEXTID_PAGOS, String(nextIdPagos));
     localStorage.setItem(SK_EVENTOS, JSON.stringify(eventos));
+    localStorage.setItem(SK_PEDIDOS_UNIF, JSON.stringify(pedidosUnif));
     if (syncEnabled) pushRemoto();
   } catch(e) { console.error(e); }
 }
@@ -1322,6 +1366,7 @@ function load() {
     const rcarpag = localStorage.getItem(SK_CARPAG);
     const rnip = localStorage.getItem(SK_NEXTID_PAGOS);
     const rev = localStorage.getItem(SK_EVENTOS);
+    const rpedunif = localStorage.getItem(SK_PEDIDOS_UNIF);
     atletas = ra ? JSON.parse(ra) : [];
     entrenadores = re ? JSON.parse(re) : [];
     registros = rr ? JSON.parse(rr) : [];
@@ -1331,6 +1376,7 @@ function load() {
     cargoPagos = rcarpag ? JSON.parse(rcarpag) : [];
     nextIdPagos = rnip ? (parseInt(rnip) || 100) : 100;
     eventos = rev ? JSON.parse(rev) : [];
+    pedidosUnif = rpedunif ? JSON.parse(rpedunif) : [];
     if (!ra || rv !== DATA_VERSION) {
       // primera vez (o versión nueva): cargamos el listado real de atletas del club
       const existentes = new Set(atletas.map(a => a.id));
@@ -1687,6 +1733,44 @@ function openModal(id) {
     renderNeqListaAtletas();
   }
   // Modales de Pagos
+  if (id === 'nuevo-pedido-unif') {
+    const sel = document.getElementById('unif-atleta');
+    if (sel) {
+      sel.innerHTML = atletas.filter(a=>a.estado==='activo').sort((a,b)=>a.nombre.localeCompare(b.nombre))
+        .map(a=>`<option value="${a.id}">${esc(a.nombre)}</option>`).join('');
+    }
+    // Poblar grid de prendas
+    const grid = document.getElementById('unif-prendas-grid');
+    if (grid) {
+      const tallasOpts = TALLAS_UNIF.map(t=>`<option value="${t}">${t}</option>`).join('');
+      grid.innerHTML = CATALOGO_UNIF.map(p => `
+        <div id="unif-btn-${p.id}" onclick="unifTogglePrenda('${p.id}')"
+          style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;background:var(--card);transition:all .15s">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:500">${esc(p.nombre)}</span>
+            <strong style="color:var(--navy);font-size:13px">${p.precio}€</strong>
+          </div>
+          <div id="unif-detalle-${p.id}" style="display:none;margin-top:6px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <label style="font-size:11px;color:var(--text-muted)">Cantidad</label>
+              <input type="number" id="unif-cant-${p.id}" value="1" min="1" max="10"
+                style="width:54px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px"
+                onclick="event.stopPropagation()" oninput="event.stopPropagation();unifActualizarTotal()">
+              ${p.tallas ? `
+              <label style="font-size:11px;color:var(--text-muted)">Talla</label>
+              <select id="unif-talla-${p.id}"
+                style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px"
+                onclick="event.stopPropagation()" onchange="event.stopPropagation()">
+                <option value="">— talla —</option>${tallasOpts}
+              </select>` : ''}
+            </div>
+          </div>
+        </div>`).join('');
+    }
+    document.getElementById('unif-total-display').textContent = '0€';
+    document.getElementById('unif-notas').value = '';
+    document.getElementById('unif-error').textContent = '';
+  }
   if (id === 'asignar-modalidad') {
     document.getElementById('am-buscar').value = '';
     const err = document.getElementById('am-error'); if(err) err.textContent='';
@@ -2375,6 +2459,7 @@ async function iniciarSync(esPrimeraVez) {
       nextIdPagos = remoto.nextIdPagos || nextIdPagos;
       if (remoto.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, remoto.inicioCobros);
       eventos = remoto.eventos || [];
+      pedidosUnif = remoto.pedidosUnif || [];
       atletas.forEach(a => normalizarAtleta(a));
       const totalAntes = atletas.length;
       aplicarParchesAtletas();
@@ -2405,6 +2490,7 @@ async function iniciarSync(esPrimeraVez) {
       nextIdPagos = data.nextIdPagos || nextIdPagos;
       if (data.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, data.inicioCobros);
       eventos = data.eventos || [];
+      pedidosUnif = data.pedidosUnif || [];
       localStorage.setItem(SK_EVENTOS, JSON.stringify(eventos));
       atletas.forEach(a => normalizarAtleta(a));
       aplicarParchesAtletas();
@@ -2435,7 +2521,7 @@ async function pushRemoto() {
   const token = syncToken();
   if (!token || !window.__fb || !window.__fb.ready) return;
   try {
-    const data = { atletas, entrenadores, registros, equipos, pagos, cargos, cargoPagos, nextIdPagos, inicioCobros: inicioCobros(), eventos, updatedAt: new Date().toISOString() };
+    const data = { atletas, entrenadores, registros, equipos, pagos, cargos, cargoPagos, nextIdPagos, inicioCobros: inicioCobros(), eventos, pedidosUnif, updatedAt: new Date().toISOString() };
     lastPushedSnapshot = JSON.stringify(data);
     await window.__fb.push(token, data);
   } catch (e) { console.error('Error al subir datos:', e); }
@@ -2578,6 +2664,7 @@ function showPagosSubTab(id, btn) {
   else if (id === 'pg-pagos') { renderPgPagos(); }
   else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
+  else if (id === 'pg-uniforme') renderUniformidad();
 }
 
 function refrescarVistasPagos() {
@@ -2588,6 +2675,7 @@ function refrescarVistasPagos() {
   else if (id === 'pg-pagos') { renderPgPagos(); }
   else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
+  else if (id === 'pg-uniforme') renderUniformidad();
   updatePagosNavBadge();
   if (sesion && sesion.tipo === 'admin' && document.getElementById('atletas-tab').classList.contains('active')) renderAdminAtletas();
 }
@@ -2954,7 +3042,7 @@ function ncTogglePersonalizado() {
 function ncRenderListaAtletas() {
   const cont = document.getElementById('nc-lista-atletas'); if (!cont) return;
   const activos = atletas.filter(a=>a.estado==='activo').sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  cont.innerHTML = activos.map(a=>`<div style="padding:4px 0;font-size:13px"><label><input type="checkbox" id="ncex-${a.id}" style="margin-right:6px"> ${esc(a.nombre)}</label></div>`).join('');
+  cont.innerHTML = activos.map(a=>`<div style="padding:4px 0;font-size:13px"><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="ncsel-${a.id}" onchange="ncPreview()"> ${esc(a.nombre)}</label></div>`).join('');
 }
 
 function ncPreview() {
@@ -2965,10 +3053,11 @@ function ncPreview() {
     const cat = document.getElementById('nc-categoria').value;
     activos = cat==='__sin__' ? activos.filter(a=>!a.categoria) : activos.filter(a=>a.categoria===cat);
   } else if (v==='personalizado') {
-    const exentos = new Set(atletas.filter(a=>a.estado==='activo').map(a=>a.id).filter(id=>{ const cb=document.getElementById('ncex-'+id); return cb&&cb.checked; }));
-    activos = activos.filter(a=>!exentos.has(a.id));
+    // Los marcados son los que SÍ reciben el cargo
+    const seleccionados = new Set(activos.map(a=>a.id).filter(id=>{ const cb=document.getElementById('ncsel-'+id); return cb&&cb.checked; }));
+    activos = activos.filter(a=>seleccionados.has(a.id));
   }
-  prev.textContent = `Se crearán ${activos.length} cargos.`;
+  prev.textContent = `Se crearán ${activos.length} cargo${activos.length!==1?'s':''}.`;
 }
 
 function crearConceptoCargo() {
@@ -2982,8 +3071,13 @@ function crearConceptoCargo() {
     const cat = document.getElementById('nc-categoria').value;
     activos = cat==='__sin__' ? activos.filter(a=>!a.categoria) : activos.filter(a=>a.categoria===cat);
   } else if (v==='personalizado') {
-    const exentos = new Set(atletas.filter(a=>a.estado==='activo').map(a=>a.id).filter(id=>{ const cb=document.getElementById('ncex-'+id); return cb&&cb.checked; }));
-    activos = activos.filter(a=>!exentos.has(a.id));
+    // Los marcados son los que SÍ reciben el cargo
+    const seleccionados = new Set(activos.map(a=>a.id).filter(id=>{ const cb=document.getElementById('ncsel-'+id); return cb&&cb.checked; }));
+    activos = activos.filter(a=>seleccionados.has(a.id));
+    if (activos.length === 0) {
+      document.getElementById('nc-preview').textContent = 'Selecciona al menos un atleta.';
+      return;
+    }
   }
   const cargoId = nextIdPagos++;
   cargos.push({ id: cargoId, concepto });
@@ -3412,6 +3506,156 @@ function renderResumenCategoria() {
       ${d.promAnterior !== null ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">Mes anterior: ${d.promAnterior}%</div>` : ''}
     </div>`).join('')}
   `;
+}
+
+/* =====================================================================
+   UNIFORMIDAD
+   ===================================================================== */
+const CATALOGO_UNIF = [
+  { id: 'camiseta',   nombre: 'Camiseta',         precio: 13, tallas: true  },
+  { id: 'pantalon_c', nombre: 'Pantalón corto',   precio: 15, tallas: true  },
+  { id: 'pantalon_l', nombre: 'Pantalón largo',   precio: 26, tallas: true  },
+  { id: 'sudadera',   nombre: 'Sudadera',          precio: 30, tallas: true  },
+  { id: 'chaqueta',   nombre: 'Chaqueta',          precio: 32, tallas: true  },
+  { id: 'mochila',    nombre: 'Mochila',           precio: 36, tallas: false },
+  { id: 'banador',    nombre: 'Bañador',           precio: 26, tallas: true  },
+  { id: 'gorro',      nombre: 'Gorro de natación', precio: 5,  tallas: false }
+];
+const TALLAS_UNIF = ['2XS','XS','S','M','L','XL','2XL','3XL','4','6','8','10','12','14','16'];
+
+function unifActualizarTotal() {
+  let total = 0;
+  CATALOGO_UNIF.forEach(p => {
+    const cant = parseInt(document.getElementById('unif-cant-' + p.id)?.value||0)||0;
+    if (cant > 0) total += cant * p.precio;
+  });
+  const el = document.getElementById('unif-total-display');
+  if (el) el.textContent = total + '€';
+}
+
+function unifTogglePrenda(id) {
+  const row = document.getElementById('unif-detalle-' + id);
+  const cantEl = document.getElementById('unif-cant-' + id);
+  if (!row || !cantEl) return;
+  const activo = row.style.display !== 'none';
+  if (activo) {
+    cantEl.value = 0;
+    row.style.display = 'none';
+  } else {
+    cantEl.value = 1;
+    row.style.display = '';
+  }
+  // Actualizar estilo del botón
+  const btn = document.getElementById('unif-btn-' + id);
+  if (btn) {
+    btn.style.borderColor = activo ? 'var(--border)' : 'var(--navy)';
+    btn.style.background = activo ? 'var(--card)' : '#e8edf5';
+  }
+  unifActualizarTotal();
+}
+
+function renderUniformidad() {
+  const q = (document.getElementById('unif-buscar')?.value||'').toLowerCase();
+  const fe = document.getElementById('unif-filtro-estado')?.value||'';
+  let lista = pedidosUnif.filter(p => {
+    const a = atletas.find(x=>x.id===p.atletaId);
+    if (q && a && !a.nombre.toLowerCase().includes(q)) return false;
+    if (fe === 'pagado' && !p.pagado) return false;
+    if (fe === 'entregado' && !p.entregado) return false;
+    if (fe === 'completo' && !(p.pagado && p.entregado)) return false;
+    if (fe === 'pendiente' && (p.pagado && p.entregado)) return false;
+    return true;
+  }).sort((a,b) => {
+    const na = atletas.find(x=>x.id===a.atletaId)?.nombre||'';
+    const nb = atletas.find(x=>x.id===b.atletaId)?.nombre||'';
+    return na.localeCompare(nb);
+  });
+
+  const cont = document.getElementById('unif-lista'); if (!cont) return;
+  if (lista.length === 0) {
+    cont.innerHTML = '<div class="card"><div class="empty">No hay pedidos de uniformidad. Pulsa "+ Nuevo pedido" para añadir uno.</div></div>';
+    return;
+  }
+
+  cont.innerHTML = lista.map(p => {
+    const a = atletas.find(x=>x.id===p.atletaId);
+    const completo = p.pagado && p.entregado;
+    // Construir líneas de detalle de prendas
+    const lineas = CATALOGO_UNIF.filter(pr => p.prendas && p.prendas[pr.id] && p.prendas[pr.id].cantidad > 0).map(pr => {
+      const det = p.prendas[pr.id];
+      const talla = det.talla ? ` · Talla: <strong>${esc(det.talla)}</strong>` : '';
+      const cant = det.cantidad > 1 ? ` × ${det.cantidad}` : '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:12.5px">
+        <span>${esc(pr.nombre)}${cant}${talla}</span>
+        <strong>${det.cantidad * pr.precio}€</strong>
+      </div>`;
+    });
+    return `
+    <div class="card" style="margin-bottom:12px;${completo?'opacity:.65':''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-weight:600;font-size:15px;color:var(--navy)">${esc(a?a.nombre:'—')}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${fmtFPag(p.fecha)} · ${lineas.length} prenda${lineas.length!==1?'s':''}</div>
+          ${p.notas ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px;font-style:italic">${esc(p.notas)}</div>` : ''}
+        </div>
+        <div style="font-size:22px;font-weight:700;color:var(--navy)">${p.total}€</div>
+      </div>
+      <div style="margin-bottom:14px">${lineas.join('')}</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;padding:7px 14px;border-radius:var(--radius-sm);border:2px solid ${p.pagado?'var(--ok)':'var(--border)'};background:${p.pagado?'var(--ok-bg)':'var(--card)'};font-weight:${p.pagado?'600':'400'}">
+          <input type="checkbox" ${p.pagado?'checked':''} onchange="unifToggle(${p.id},'pagado',this.checked)" style="width:16px;height:16px">
+          <span style="color:${p.pagado?'var(--ok)':'var(--text-muted)'}">✓ Pagado</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;padding:7px 14px;border-radius:var(--radius-sm);border:2px solid ${p.entregado?'var(--navy)':'var(--border)'};background:${p.entregado?'#e8edf5':'var(--card)'};font-weight:${p.entregado?'600':'400'}">
+          <input type="checkbox" ${p.entregado?'checked':''} onchange="unifToggle(${p.id},'entregado',this.checked)" style="width:16px;height:16px">
+          <span style="color:${p.entregado?'var(--navy)':'var(--text-muted)'}">📦 Entregado</span>
+        </label>
+        ${completo ? '<span style="font-size:12px;color:var(--ok);font-weight:600;margin-left:4px">✓ Completado</span>' : ''}
+        <button class="btn btn-sm btn-danger" onclick="eliminarPedidoUnif(${p.id})" style="margin-left:auto">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function unifToggle(id, campo, valor) {
+  const p = pedidosUnif.find(x=>x.id===id); if (!p) return;
+  p[campo] = valor;
+  save();
+  renderUniformidad();
+}
+
+function eliminarPedidoUnif(id) {
+  if (!confirm('¿Eliminar este pedido de uniformidad?')) return;
+  pedidosUnif = pedidosUnif.filter(x=>x.id!==id);
+  save();
+  renderUniformidad();
+}
+
+function guardarPedidoUnif() {
+  const atletaId = parseInt(document.getElementById('unif-atleta').value);
+  const err = document.getElementById('unif-error');
+  const prendas = {};
+  let total = 0;
+  CATALOGO_UNIF.forEach(p => {
+    const cant = parseInt(document.getElementById('unif-cant-' + p.id)?.value||0)||0;
+    if (cant > 0) {
+      const talla = p.tallas ? (document.getElementById('unif-talla-' + p.id)?.value||'') : '';
+      prendas[p.id] = { cantidad: cant, talla };
+      total += cant * p.precio;
+    }
+  });
+  if (!atletaId) { err.textContent = 'Selecciona un atleta.'; return; }
+  if (Object.keys(prendas).length === 0) { err.textContent = 'Añade al menos una prenda con cantidad.'; return; }
+  err.textContent = '';
+  pedidosUnif.push({
+    id: nextIdPagos++, atletaId, prendas, total,
+    pagado: false, entregado: false,
+    notas: document.getElementById('unif-notas').value.trim(),
+    fecha: new Date().toISOString().split('T')[0]
+  });
+  save();
+  closeModal('nuevo-pedido-unif');
+  renderUniformidad();
 }
 
 initAuth();
