@@ -874,32 +874,22 @@ tr:last-child td { border-bottom: none; }
 
         <!-- PG CARGOS / PAGOS ÚNICOS -->
         <div id="pg-cargos" class="pg-subsection">
-          <div class="card">
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Para cobros puntuales que no son la cuota mensual, como la licencia federativa, equipación, o cuotas de inscripción a torneos.</p>
+          <div class="card" style="margin-bottom:14px">
             <div class="toolbar">
               <div class="toolbar-left">
-                <select id="pg-filter-cargo" onchange="pagCargosPag=1;renderPgCargos()">
-                  <option value="">Todos los conceptos</option>
-                </select>
-                <select id="pg-filter-cargo-estado" onchange="pagCargosPag=1;renderPgCargos()">
-                  <option value="">Todos</option>
+                <input class="search-input" type="search" placeholder="Buscar concepto o atleta..." id="pg-search-cargo" oninput="renderPgCargos()">
+                <select id="pg-filter-cargo-estado" onchange="renderPgCargos()">
+                  <option value="">Todos los estados</option>
                   <option value="pagado">Pagado</option>
                   <option value="pendiente">Pendiente</option>
                   <option value="vencido">Vencido</option>
                   <option value="exento">Exento</option>
                 </select>
-                <input class="search-input" type="search" placeholder="Buscar atleta..." id="pg-search-cargo" oninput="pagCargosPag=1;renderPgCargos()">
               </div>
               <button class="btn btn-primary btn-sm" onclick="openModal('nuevo-cargo')">+ Nuevo concepto</button>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Atleta</th><th>Concepto</th><th>Importe</th><th>Estado</th><th>Fecha pago</th><th>Notas</th><th></th></tr></thead>
-                <tbody id="pg-body-cargos"></tbody>
-              </table>
-              <div class="pagination" id="pg-pag-cargos"></div>
-            </div>
           </div>
+          <div id="pg-body-cargos-agrupado"></div>
         </div>
 
         <!-- PG ALERTAS -->
@@ -1287,7 +1277,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-13';
+const BUILD_ID = '2026-06-19-14';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2662,7 +2652,7 @@ function showPagosSubTab(id, btn) {
   if (btn) btn.classList.add('active');
   if (id === 'pg-resumen') renderPgResumen();
   else if (id === 'pg-pagos') { renderPgPagos(); }
-  else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
+  else if (id === 'pg-cargos') { renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
   else if (id === 'pg-uniforme') renderUniformidad();
 }
@@ -2673,7 +2663,7 @@ function refrescarVistasPagos() {
   const id = activo.id;
   if (id === 'pg-resumen') renderPgResumen();
   else if (id === 'pg-pagos') { renderPgPagos(); }
-  else if (id === 'pg-cargos') { initFiltroPgCargos(); renderPgCargos(); }
+  else if (id === 'pg-cargos') { renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
   else if (id === 'pg-uniforme') renderUniformidad();
   updatePagosNavBadge();
@@ -2949,45 +2939,104 @@ function saveEditPagoPag() {
 // Poblar select de atletas en modal asignar-modalidad — la lógica de init está en openModal()
 
 // --- Cargos / Pagos únicos ---
-function initFiltroPgCargos() {
-  const sel = document.getElementById('pg-filter-cargo'); if (!sel) return;
-  const cur = sel.value;
-  const conceptos = [...new Set(cargos.map(c=>c.concepto))];
-  sel.innerHTML = '<option value="">Todos los conceptos</option>' + conceptos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  if (cur) sel.value = cur;
+function renderPgCargos() {
+  const q = (document.getElementById('pg-search-cargo')?.value||'').toLowerCase();
+  const fe = document.getElementById('pg-filter-cargo-estado')?.value||'';
+  const cont = document.getElementById('pg-body-cargos-agrupado'); if (!cont) return;
+
+  // Poblar categorías en nc-categoria al mismo tiempo
   const nc = document.getElementById('nc-categoria'); if (nc) {
     nc.innerHTML = '<option value="__sin__">Sin categoría asignada</option>';
     CATEGORIAS_FIJAS.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; nc.appendChild(o); });
   }
+
+  if (cargos.length === 0) {
+    cont.innerHTML = '<div class="card"><div class="empty">No hay conceptos de pago único. Pulsa "+ Nuevo concepto" para crear uno.</div></div>';
+    return;
+  }
+
+  // Filtrar por búsqueda de concepto o atleta
+  const cargosVis = cargos.filter(c => !q || c.concepto.toLowerCase().includes(q) ||
+    cargoPagos.filter(cp=>cp.cargoId===c.id).some(cp=>{ const a=atletas.find(x=>x.id===cp.atletaId); return a&&a.nombre.toLowerCase().includes(q); }));
+
+  if (cargosVis.length === 0) {
+    cont.innerHTML = '<div class="card"><div class="empty">Ningún concepto coincide con la búsqueda.</div></div>';
+    return;
+  }
+
+  cont.innerHTML = cargosVis.map(cargo => {
+    let pagosDelCargo = cargoPagos.filter(cp => cp.cargoId === cargo.id);
+    if (fe) pagosDelCargo = pagosDelCargo.filter(cp => cp.estado === fe);
+    if (q) pagosDelCargo = pagosDelCargo.filter(cp => { const a=atletas.find(x=>x.id===cp.atletaId); return a&&a.nombre.toLowerCase().includes(q); });
+
+    const totalCargo = cargoPagos.filter(cp=>cp.cargoId===cargo.id);
+    const pagados = totalCargo.filter(cp=>cp.estado==='pagado').length;
+    const pendientes = totalCargo.filter(cp=>cp.estado==='pendiente'||cp.estado==='vencido').length;
+    const importeTotal = totalCargo.reduce((s,cp)=>s+cp.importe,0);
+    const importeCobrado = totalCargo.filter(cp=>cp.estado==='pagado').reduce((s,cp)=>s+cp.importe,0);
+
+    const filas = pagosDelCargo.sort((a,b)=>{
+      const na=atletas.find(x=>x.id===a.atletaId)?.nombre||'';
+      const nb=atletas.find(x=>x.id===b.atletaId)?.nombre||'';
+      return na.localeCompare(nb);
+    }).map(cp => {
+      const a = atletas.find(x=>x.id===cp.atletaId);
+      const toggleBtn = cp.estado==='pagado'
+        ? `<button class="btn btn-sm btn-success" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✓ Pagado</button>`
+        : `<button class="btn btn-sm btn-danger" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✕ Pendiente</button>`;
+      return `<tr>
+        <td style="font-weight:500">${esc(a?a.nombre:'—')}</td>
+        <td><strong>${cp.importe}€</strong></td>
+        <td>${badgePP(cp.estado)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(cp.fecha)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${esc(cp.notas||'')}</td>
+        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditCargoPag(${cp.id})">✏</button> <button class="btn btn-sm btn-danger" onclick="eliminarCargoPago(${cp.id})" title="Eliminar este cargo">✕</button></td>
+      </tr>`;
+    }).join('');
+
+    return `
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-weight:700;font-size:15px;color:var(--navy)">${esc(cargo.concepto)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px">
+            ${totalCargo.length} atleta${totalCargo.length!==1?'s':''} ·
+            <span style="color:var(--ok)">${pagados} pagado${pagados!==1?'s':''}</span> ·
+            <span style="color:${pendientes>0?'var(--red)':'var(--text-muted)'}">${pendientes} pendiente${pendientes!==1?'s':''}</span> ·
+            Recaudado: <strong>${importeCobrado}€ / ${importeTotal}€</strong>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="eliminarConceptoCompleto(${cargo.id})" title="Eliminar este concepto entero y todos sus cargos">
+          🗑 Eliminar concepto
+        </button>
+      </div>
+      ${pagosDelCargo.length > 0 ? `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Atleta</th><th>Importe</th><th>Estado</th><th>Fecha pago</th><th>Notas</th><th></th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>` : `<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Ningún atleta coincide con el filtro aplicado.</div>`}
+    </div>`;
+  }).join('');
 }
 
-function renderPgCargos() {
-  initFiltroPgCargos();
-  const q = (document.getElementById('pg-search-cargo')?.value||'').toLowerCase();
-  const fc = document.getElementById('pg-filter-cargo')?.value||'';
-  const fe = document.getElementById('pg-filter-cargo-estado')?.value||'';
-  let lista = cargoPagos.filter(cp => {
-    if (fe && cp.estado!==fe) return false;
-    const cargo = cargos.find(c=>c.id===cp.cargoId);
-    if (fc && (!cargo || cargo.concepto!==fc)) return false;
-    const a = atletas.find(x=>x.id===cp.atletaId);
-    if (q && a && !a.nombre.toLowerCase().includes(q)) return false;
-    return true;
-  }).sort((a,b) => { const na=atletas.find(x=>x.id===a.atletaId)?.nombre||''; const nb=atletas.find(x=>x.id===b.atletaId)?.nombre||''; return na.localeCompare(nb); });
-  const total = lista.length, pages = Math.ceil(total/PER_PAGOS)||1;
-  if (pagCargosPag > pages) pagCargosPag = 1;
-  const slice = lista.slice((pagCargosPag-1)*PER_PAGOS, pagCargosPag*PER_PAGOS);
-  const body = document.getElementById('pg-body-cargos'); if (!body) return;
-  body.innerHTML = slice.length===0 ? '<tr><td colspan="7"><div class="empty">Sin conceptos de pago único</div></td></tr>'
-    : slice.map(cp => {
-      const a = atletas.find(x=>x.id===cp.atletaId);
-      const cargo = cargos.find(c=>c.id===cp.cargoId);
-      const toggleBtn = cp.estado==='pagado'
-        ? `<button class="btn btn-sm btn-success" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✓ Pagó</button>`
-        : `<button class="btn btn-sm btn-danger" onclick="toggleCargoPag(${cp.id})" style="font-size:11px">✕ Pendiente</button>`;
-      return `<tr><td style="font-weight:500">${esc(a?a.nombre:'—')}</td><td>${esc(cargo?cargo.concepto:'—')}</td><td><strong>${cp.importe}€</strong></td><td>${badgePP(cp.estado)}</td><td style="font-size:12px;color:var(--text-muted)">${fmtFPag(cp.fecha)}</td><td style="font-size:12px;color:var(--text-muted)">${esc(cp.notas||'')}</td><td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditCargoPag(${cp.id})">✏</button></td></tr>`;
-    }).join('');
-  renderPgPaginador('pg-pag-cargos', pagCargosPag, pages, p => { pagCargosPag=p; renderPgCargos(); }, total);
+function eliminarConceptoCompleto(cargoId) {
+  const cargo = cargos.find(c=>c.id===cargoId); if (!cargo) return;
+  const n = cargoPagos.filter(cp=>cp.cargoId===cargoId).length;
+  if (!confirm(`¿Eliminar el concepto "${cargo.concepto}" y sus ${n} cargo${n!==1?'s':''} asociados? Esta acción no se puede deshacer.`)) return;
+  cargos = cargos.filter(c=>c.id!==cargoId);
+  cargoPagos = cargoPagos.filter(cp=>cp.cargoId!==cargoId);
+  save();
+  renderPgCargos();
+  renderPgResumen();
+}
+
+function eliminarCargoPago(id) {
+  if (!confirm('¿Eliminar este cargo individual?')) return;
+  cargoPagos = cargoPagos.filter(cp=>cp.id!==id);
+  save();
+  renderPgCargos();
 }
 
 function renderPgPaginador(elId, cur, total, cb, count) {
