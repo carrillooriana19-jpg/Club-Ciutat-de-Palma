@@ -849,6 +849,9 @@ tr:last-child td { border-bottom: none; }
             <div class="toolbar">
               <div class="toolbar-left">
                 <input class="search-input" type="search" placeholder="Buscar atleta..." id="pg-search-pago" oninput="pagPagosPag=1;renderPgPagos()">
+                <select id="pg-filter-mes-pago" onchange="pagPagosPag=1;renderPgPagos()">
+                  <option value="">Todos los meses</option>
+                </select>
                 <select id="pg-filter-modalidad" onchange="pagPagosPag=1;renderPgPagos()">
                   <option value="">Todas las modalidades</option>
                   <option value="3plazos">Opción A — 3 plazos</option>
@@ -1303,7 +1306,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-15';
+const BUILD_ID = '2026-06-19-16';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2881,6 +2884,19 @@ function renderPgPagos() {
   const q = (document.getElementById('pg-search-pago')?.value||'').toLowerCase();
   const fm = document.getElementById('pg-filter-modalidad')?.value || '';
   const fe = document.getElementById('pg-filter-pago-estado')?.value || '';
+  const selMes = document.getElementById('pg-filter-mes-pago');
+  const mesFiltro = selMes?.value || '';
+
+  // Poblar select de meses con los que tienen pagos
+  if (selMes) {
+    const mesesDisponibles = [...new Set(pagos
+      .map(p => p.fechaLimite ? p.fechaLimite.slice(0,7) : (p.mes||null))
+      .filter(Boolean)
+    )].sort();
+    const cur = selMes.value;
+    selMes.innerHTML = '<option value="">Todos los meses</option>' +
+      mesesDisponibles.map(m => `<option value="${m}"${cur===m?' selected':''}>${fmtMesPag(m)}</option>`).join('');
+  }
   const hoy = new Date().toISOString().split('T')[0];
   // Auto-marcar como vencido si pasó la fecha límite y sigue pendiente
   let cambioVencido = false;
@@ -2894,6 +2910,11 @@ function renderPgPagos() {
   let lista = pagos.filter(p => {
     if (fm && p.modalidad !== fm) return false;
     if (fe && p.estado !== fe) return false;
+    // Filtro por mes: compara el mes de la fecha límite o del campo mes
+    if (mesFiltro) {
+      const mesPago = p.mes || (p.fechaLimite ? p.fechaLimite.slice(0,7) : null);
+      if (mesPago !== mesFiltro) return false;
+    }
     const a = atletas.find(x => x.id === p.atletaId);
     if (q && a && !a.nombre.toLowerCase().includes(q)) return false;
     return true;
