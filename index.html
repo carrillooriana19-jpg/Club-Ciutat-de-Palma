@@ -707,9 +707,9 @@ tr:last-child td { border-bottom: none; }
             <strong style="font-size:15px">Añadir evento</strong>
             <div class="field-row" style="margin-top:12px">
               <div class="field"><label>Fecha *</label><input type="date" id="cal-nueva-fecha"></div>
-              <div class="field"><label>Hora</label><input type="time" id="cal-nueva-hora" placeholder="Opcional"></div>
+              <div class="field"><label>Hora</label><input type="time" id="cal-nueva-hora"></div>
               <div class="field"><label>Tipo</label>
-                <select id="cal-nuevo-tipo">
+                <select id="cal-nuevo-tipo" onchange="calToggleTipoPartido()">
                   <option value="partido">Partido</option>
                   <option value="entrenamiento">Entrenamiento especial</option>
                   <option value="torneo">Torneo</option>
@@ -717,12 +717,43 @@ tr:last-child td { border-bottom: none; }
                 </select>
               </div>
             </div>
-            <div class="field"><label>Título *</label><input id="cal-nuevo-titulo" placeholder="Ej. C.N Ciutat de Palma vs C.N Palma"></div>
+
+            <!-- Campos específicos de partido -->
+            <div id="cal-campos-partido">
+              <div class="field-row">
+                <div class="field">
+                  <label>¿Local o visitante? *</label>
+                  <select id="cal-nueva-localidad">
+                    <option value="casa">Local</option>
+                    <option value="visitante">Visitante (fuera)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Equipo rival *</label>
+                  <div style="position:relative">
+                    <input id="cal-nuevo-rival" placeholder="Nombre del equipo rival..." autocomplete="off"
+                      oninput="calBuscarRival(this.value)" onblur="setTimeout(()=>calCerrarRivales(),200)">
+                    <div id="cal-rivales-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:100;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Título para eventos no-partido -->
+            <div id="cal-campo-titulo" style="display:none">
+              <div class="field"><label>Título *</label><input id="cal-nuevo-titulo" placeholder="Ej. Torneo de pretemporada..."></div>
+            </div>
+
             <div class="field-row">
               <div class="field"><label>Lugar</label><input id="cal-nuevo-lugar" placeholder="Piscina Son Hugo..."></div>
-              <div class="field"><label>Categorías (separadas por coma)</label><input id="cal-nuevo-cats" placeholder="Todas, o Benjamín, Alevín..."></div>
+              <div class="field"><label>Entrenador responsable</label>
+                <select id="cal-nuevo-entrenador">
+                  <option value="">Sin asignar</option>
+                </select>
+              </div>
             </div>
-            <div class="field"><label>Notas adicionales</label><textarea id="cal-nuevo-notas" placeholder="Convocatoria, equipación, indicaciones..."></textarea></div>
+            <div class="field"><label>Categorías (separadas por coma)</label><input id="cal-nuevo-cats" placeholder="Todas, o Benjamín, Alevín..."></div>
+            <div class="field"><label>Notas</label><textarea id="cal-nuevo-notas" placeholder="Convocatoria, equipación, indicaciones..."></textarea></div>
             <div class="modal-actions" style="padding:0;margin-top:12px">
               <button class="btn btn-primary" onclick="guardarEvento()">Añadir evento</button>
               <div id="cal-nuevo-error" class="login-error" style="margin:0"></div>
@@ -732,8 +763,6 @@ tr:last-child td { border-bottom: none; }
 
         <div id="cal-lista"></div>
       </div>
-
-      <!-- CONFIGURACIÓN (solo admin) -->
       <div id="config-tab" class="section">
         <div class="page-title">Configuración</div>
         <div class="page-sub">Ajustes generales del club. Solo visible para Administración.</div>
@@ -1327,7 +1356,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-17';
+const BUILD_ID = '2026-06-19-19';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1345,10 +1374,12 @@ let syncEnabled = false, syncUnsubscribe = null, lastPushedSnapshot = null, sync
 
 // ---- Sección de PAGOS (solo Administración) ----
 let pagos = [], cargos = [], cargoPagos = [], nextIdPagos = 100;
-let eventos = []; // {id, fecha:'YYYY-MM-DD', hora, tipo, titulo, lugar, categorias, notas}
-let pedidosUnif = []; // {id, atletaId, prendas:{camiseta:1,...}, total, pagado:false, entregado:false, notas, fecha}
+let eventos = []; // {id, fecha, hora, tipo, titulo, rival, localidad, entrenador, lugar, categorias, notas}
+let pedidosUnif = [];
+let rivalesEquipos = []; // lista de nombres de equipos rivales guardados
 const SK_EVENTOS = 'wpa_eventos';
 const SK_PEDIDOS_UNIF = 'wpa_pedidos_unif';
+const SK_RIVALES = 'wpa_rivales';
 let pagAtletasPag = 1, pagPagosPag = 1, pagCargosPag = 1;
 let bajaTargetPagos = null;
 const PER_PAGOS = 12;
@@ -1390,6 +1421,7 @@ function save() {
     localStorage.setItem(SK_NEXTID_PAGOS, String(nextIdPagos));
     localStorage.setItem(SK_EVENTOS, JSON.stringify(eventos));
     localStorage.setItem(SK_PEDIDOS_UNIF, JSON.stringify(pedidosUnif));
+    localStorage.setItem(SK_RIVALES, JSON.stringify(rivalesEquipos));
     if (syncEnabled) pushRemoto();
   } catch(e) { console.error(e); }
 }
@@ -1407,6 +1439,7 @@ function load() {
     const rnip = localStorage.getItem(SK_NEXTID_PAGOS);
     const rev = localStorage.getItem(SK_EVENTOS);
     const rpedunif = localStorage.getItem(SK_PEDIDOS_UNIF);
+    const rrivales = localStorage.getItem(SK_RIVALES);
     atletas = ra ? JSON.parse(ra) : [];
     entrenadores = re ? JSON.parse(re) : [];
     registros = rr ? JSON.parse(rr) : [];
@@ -1417,6 +1450,7 @@ function load() {
     nextIdPagos = rnip ? (parseInt(rnip) || 100) : 100;
     eventos = rev ? JSON.parse(rev) : [];
     pedidosUnif = rpedunif ? JSON.parse(rpedunif) : [];
+    rivalesEquipos = rrivales ? JSON.parse(rrivales) : [];
     if (!ra || rv !== DATA_VERSION) {
       // primera vez (o versión nueva): cargamos el listado real de atletas del club
       const existentes = new Set(atletas.map(a => a.id));
@@ -2520,6 +2554,7 @@ async function iniciarSync(esPrimeraVez) {
       if (remoto.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, remoto.inicioCobros);
       eventos = remoto.eventos || [];
       pedidosUnif = remoto.pedidosUnif || [];
+      rivalesEquipos = remoto.rivalesEquipos || [];
       atletas.forEach(a => normalizarAtleta(a));
       const totalAntes = atletas.length;
       aplicarParchesAtletas();
@@ -2551,6 +2586,7 @@ async function iniciarSync(esPrimeraVez) {
       if (data.inicioCobros) localStorage.setItem(SK_INICIO_COBROS, data.inicioCobros);
       eventos = data.eventos || [];
       pedidosUnif = data.pedidosUnif || [];
+      rivalesEquipos = data.rivalesEquipos || [];
       localStorage.setItem(SK_EVENTOS, JSON.stringify(eventos));
       atletas.forEach(a => normalizarAtleta(a));
       aplicarParchesAtletas();
@@ -2581,7 +2617,7 @@ async function pushRemoto() {
   const token = syncToken();
   if (!token || !window.__fb || !window.__fb.ready) return;
   try {
-    const data = { atletas, entrenadores, registros, equipos, pagos, cargos, cargoPagos, nextIdPagos, inicioCobros: inicioCobros(), eventos, pedidosUnif, updatedAt: new Date().toISOString() };
+    const data = { atletas, entrenadores, registros, equipos, pagos, cargos, cargoPagos, nextIdPagos, inicioCobros: inicioCobros(), eventos, pedidosUnif, rivalesEquipos, updatedAt: new Date().toISOString() };
     lastPushedSnapshot = JSON.stringify(data);
     await window.__fb.push(token, data);
   } catch (e) { console.error('Error al subir datos:', e); }
@@ -3430,19 +3466,93 @@ async function exportarAtletasPDF() {
 const TIPO_EVENTO = { partido: 'Partido', entrenamiento: 'Entrenamiento especial', torneo: 'Torneo', otro: 'Otro' };
 const COLOR_TIPO = { partido: '#1d8a4a', entrenamiento: '#1a5fa8', torneo: '#c8a020', otro: '#6b7280' };
 
+function calToggleTipoPartido() {
+  const tipo = document.getElementById('cal-nuevo-tipo').value;
+  const esPartido = tipo === 'partido';
+  document.getElementById('cal-campos-partido').style.display = esPartido ? '' : 'none';
+  document.getElementById('cal-campo-titulo').style.display = esPartido ? 'none' : '';
+}
+
+function calBuscarRival(q) {
+  const dd = document.getElementById('cal-rivales-dropdown'); if (!dd) return;
+  if (!q.trim()) { dd.style.display = 'none'; return; }
+  const ql = q.toLowerCase();
+  const coincidencias = rivalesEquipos.filter(r => r.toLowerCase().includes(ql));
+  // Mostrar también la opción de crear nuevo si no existe exacto
+  const exacto = rivalesEquipos.some(r => r.toLowerCase() === ql);
+  let html = coincidencias.map(r =>
+    `<div style="padding:8px 12px;cursor:pointer;font-size:13px" onmousedown="calSeleccionarRival('${esc(r)}')"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      ${esc(r)}
+    </div>`
+  ).join('');
+  if (!exacto && q.trim()) {
+    html += `<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--navy);border-top:1px solid var(--border)"
+      onmousedown="calSeleccionarRival('${esc(q.trim())}')"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      + Guardar "${esc(q.trim())}" como nuevo equipo
+    </div>`;
+  }
+  dd.innerHTML = html || '<div style="padding:8px 12px;font-size:13px;color:var(--text-muted)">Sin coincidencias</div>';
+  dd.style.display = '';
+}
+
+function calSeleccionarRival(nombre) {
+  const input = document.getElementById('cal-nuevo-rival'); if (input) input.value = nombre;
+  const dd = document.getElementById('cal-rivales-dropdown'); if (dd) dd.style.display = 'none';
+  // Guardar en la lista si no existe
+  if (!rivalesEquipos.includes(nombre)) {
+    rivalesEquipos.push(nombre);
+    rivalesEquipos.sort((a,b) => a.localeCompare(b));
+    save();
+  }
+}
+
+function calCerrarRivales() {
+  const dd = document.getElementById('cal-rivales-dropdown'); if (dd) dd.style.display = 'none';
+}
+
+function calPoblarEntrenadores() {
+  const sel = document.getElementById('cal-nuevo-entrenador'); if (!sel) return;
+  sel.innerHTML = '<option value="">Sin asignar</option>' +
+    entrenadores.filter(e=>e.activo!==false).sort((a,b)=>a.nombre.localeCompare(b.nombre))
+      .map(e=>`<option value="${esc(e.nombre)}">${esc(e.nombre)}</option>`).join('');
+}
+
 function guardarEvento() {
   const fecha = document.getElementById('cal-nueva-fecha').value;
-  const titulo = document.getElementById('cal-nuevo-titulo').value.trim();
+  const tipo = document.getElementById('cal-nuevo-tipo').value;
   const err = document.getElementById('cal-nuevo-error');
-  if (!fecha || !titulo) { err.textContent = 'Fecha y título son obligatorios.'; return; }
+  const esPartido = tipo === 'partido';
+
+  let titulo = '';
+  let rival = '';
+  let localidad = '';
+
+  if (esPartido) {
+    rival = (document.getElementById('cal-nuevo-rival').value||'').trim();
+    localidad = document.getElementById('cal-nueva-localidad').value;
+    if (!fecha || !rival) { err.textContent = 'Fecha y equipo rival son obligatorios.'; return; }
+    titulo = localidad === 'casa'
+      ? `C.N Ciutat de Palma vs ${rival}`
+      : `${rival} vs C.N Ciutat de Palma`;
+    // Guardar rival si es nuevo
+    if (!rivalesEquipos.includes(rival)) {
+      rivalesEquipos.push(rival);
+      rivalesEquipos.sort((a,b) => a.localeCompare(b));
+    }
+  } else {
+    titulo = (document.getElementById('cal-nuevo-titulo').value||'').trim();
+    if (!fecha || !titulo) { err.textContent = 'Fecha y título son obligatorios.'; return; }
+  }
+
   err.textContent = '';
   const nuevoId = Math.max(0, ...eventos.map(e => e.id||0)) + 1;
   eventos.push({
-    id: nuevoId,
-    fecha,
+    id: nuevoId, fecha,
     hora: document.getElementById('cal-nueva-hora').value || '',
-    tipo: document.getElementById('cal-nuevo-tipo').value,
-    titulo,
+    tipo, titulo, rival, localidad,
+    entrenador: document.getElementById('cal-nuevo-entrenador').value || '',
     lugar: document.getElementById('cal-nuevo-lugar').value.trim(),
     categorias: document.getElementById('cal-nuevo-cats').value.trim(),
     notas: document.getElementById('cal-nuevo-notas').value.trim()
@@ -3450,8 +3560,11 @@ function guardarEvento() {
   eventos.sort((a,b) => a.fecha.localeCompare(b.fecha));
   save();
   // Limpiar formulario
-  ['cal-nueva-fecha','cal-nueva-hora','cal-nuevo-titulo','cal-nuevo-lugar','cal-nuevo-cats','cal-nuevo-notas'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['cal-nueva-fecha','cal-nueva-hora','cal-nuevo-rival','cal-nuevo-titulo','cal-nuevo-lugar','cal-nuevo-cats','cal-nuevo-notas'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('cal-nuevo-tipo').value = 'partido';
+  document.getElementById('cal-nueva-localidad').value = 'casa';
+  calToggleTipoPartido();
+  err.textContent = '';
   renderCalendario();
   actualizarBadgeCalendario();
 }
@@ -3478,8 +3591,9 @@ function renderCalendario() {
   const panel = document.getElementById('cal-admin-panel');
   if (panel) panel.style.display = esAdmin ? '' : 'none';
 
-  // Poblar select de categorías con las que existen en eventos
-  const selCat = document.getElementById('cal-filtro-cat');
+  // Poblar select de entrenadores y resetear tipo al abrir
+  calPoblarEntrenadores();
+  calToggleTipoPartido();
   if (selCat) {
     const curCat = selCat.value;
     const cats = [...new Set(eventos.filter(e => e.categorias).map(e => e.categorias.split(',').map(c=>c.trim())).flat().filter(Boolean))].sort();
@@ -3546,13 +3660,18 @@ function renderCalendario() {
     const color = COLOR_TIPO[ev.tipo] || COLOR_TIPO.otro;
     const etiqueta = TIPO_EVENTO[ev.tipo] || 'Otro';
     const pasado = ev.fecha < hoyStr;
+    const esPartido = ev.tipo === 'partido';
+    const localidadBadge = esPartido && ev.localidad
+      ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:${ev.localidad==='casa'?'#e8edf5':'#fdf3d9'};color:${ev.localidad==='casa'?'var(--navy)':'#9c7a14'};border:1px solid ${ev.localidad==='casa'?'#c5d0e6':'#e8d5a0'}">${ev.localidad==='casa'?'🏠 Local':'✈️ Visitante'}</span>` : '';
     return `
     <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);opacity:${pasado?'.6':'1'}">
       <div style="width:4px;min-height:60px;background:${color};border-radius:4px;flex-shrink:0"></div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
           <span style="font-size:11px;font-weight:600;color:${color};text-transform:uppercase;letter-spacing:.04em">${etiqueta}</span>
+          ${localidadBadge}
           ${ev.categorias ? `<span style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:1px 7px;border-radius:20px;border:1px solid var(--border)">${esc(ev.categorias)}</span>` : ''}
+          ${ev.entrenador ? `<span style="font-size:11px;color:var(--text-muted)">👤 ${esc(ev.entrenador)}</span>` : ''}
         </div>
         <div style="font-weight:600;font-size:15px;color:var(--navy);margin-bottom:2px">${esc(ev.titulo)}</div>
         <div style="font-size:12.5px;color:var(--text-muted)">${fmtFechaEvento(ev.fecha)}${ev.hora ? ' · ' + ev.hora + 'h' : ''}${ev.lugar ? ' · ' + esc(ev.lugar) : ''}</div>
