@@ -932,17 +932,38 @@ tr:last-child td { border-bottom: none; }
 
 <!-- MODAL: nuevo / editar entrenador -->
 <div class="modal-overlay" id="modal-add-pago-mensual">
-  <div class="modal" style="width:min(480px,94vw)">
-    <h3>Añadir pago mensual</h3>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Para atletas con pago mensual variable. Puedes añadir varios meses a la vez.</p>
+  <div class="modal" style="width:min(500px,94vw)">
+    <h3>Añadir pagos mensuales</h3>
     <div class="field"><label>Atleta *</label>
-      <select id="apm-atleta">
+      <select id="apm-atleta"></select>
+    </div>
+    <div class="field">
+      <label>Modo de entrada</label>
+      <select id="apm-modo" onchange="apmCambiarModo()">
+        <option value="rango">Rango de meses (mismo importe cada mes)</option>
+        <option value="manual">Mes a mes (importe diferente por mes)</option>
       </select>
     </div>
-    <div id="apm-meses-wrap">
+    <div id="apm-modo-rango">
+      <div class="field-row">
+        <div class="field"><label>Mes inicio *</label><input type="month" id="apm-rango-desde" oninput="apmRangoPreview()"></div>
+        <div class="field"><label>Mes fin *</label><input type="month" id="apm-rango-hasta" oninput="apmRangoPreview()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Importe mensual (€) *</label><input type="number" id="apm-rango-imp" min="0" placeholder="Ej. 80" oninput="apmRangoPreview()"></div>
+        <div class="field"><label>Estado inicial</label>
+          <select id="apm-rango-est">
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+          </select>
+        </div>
+      </div>
+      <div id="apm-rango-preview" style="font-size:13px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:4px;min-height:32px"></div>
+    </div>
+    <div id="apm-modo-manual" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <label style="font-size:13px;font-weight:500">Meses a añadir</label>
-        <button class="btn btn-sm" onclick="apmAnadirMes()" type="button">+ Mes</button>
+        <label style="font-size:13px;font-weight:500">Meses</label>
+        <button class="btn btn-sm" onclick="apmAnadirMes()" type="button">+ Añadir mes</button>
       </div>
       <div id="apm-meses-lista"></div>
     </div>
@@ -1306,7 +1327,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-16';
+const BUILD_ID = '2026-06-19-17';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1793,14 +1814,22 @@ function openModal(id) {
   if (id === 'add-pago-mensual') {
     const sel = document.getElementById('apm-atleta');
     if (sel) {
-      // Solo atletas con modalidad mensual asignada
-      const mensuales = atletas.filter(a => a.estado==='activo' && pagos.some(p=>p.atletaId===a.id&&p.modalidad==='mensual') || a.estado==='activo');
       sel.innerHTML = atletas.filter(a=>a.estado==='activo').sort((a,b)=>a.nombre.localeCompare(b.nombre))
-        .map(a=>{ const esMensual=pagos.some(p=>p.atletaId===a.id&&p.modalidad==='mensual'); return `<option value="${a.id}"${esMensual?' style="font-weight:600"':''}>${esc(a.nombre)}${esMensual?' (mensual)':''}</option>`; }).join('');
+        .map(a=>{ const esMensual=pagos.some(p=>p.atletaId===a.id&&p.modalidad==='mensual'); return `<option value="${a.id}">${esc(a.nombre)}${esMensual?' (mensual)':''}</option>`; }).join('');
     }
     document.getElementById('apm-error').textContent = '';
     document.getElementById('apm-meses-lista').innerHTML = '';
-    apmAnadirMes(); // Añadir una fila por defecto
+    document.getElementById('apm-modo').value = 'rango';
+    document.getElementById('apm-modo-rango').style.display = '';
+    document.getElementById('apm-modo-manual').style.display = 'none';
+    // Inicializar rango con mes actual
+    const hoy = new Date();
+    const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('apm-rango-desde').value = mesActual;
+    document.getElementById('apm-rango-hasta').value = mesActual;
+    document.getElementById('apm-rango-imp').value = '';
+    document.getElementById('apm-rango-est').value = 'pendiente';
+    document.getElementById('apm-rango-preview').textContent = '';
   }
   if (id === 'asignar-modalidad') {
     document.getElementById('am-buscar').value = '';
@@ -3777,6 +3806,39 @@ function guardarPedidoUnif() {
 // --- Pagos mensuales (Opción D) ---
 let apmContador = 0;
 
+function apmCambiarModo() {
+  const modo = document.getElementById('apm-modo').value;
+  document.getElementById('apm-modo-rango').style.display = modo === 'rango' ? '' : 'none';
+  document.getElementById('apm-modo-manual').style.display = modo === 'manual' ? '' : 'none';
+  if (modo === 'manual' && document.getElementById('apm-meses-lista').children.length === 0) apmAnadirMes();
+  document.getElementById('apm-error').textContent = '';
+}
+
+function apmRangoPreview() {
+  const desde = document.getElementById('apm-rango-desde').value;
+  const hasta = document.getElementById('apm-rango-hasta').value;
+  const imp = parseFloat(document.getElementById('apm-rango-imp').value);
+  const prev = document.getElementById('apm-rango-preview');
+  if (!desde || !hasta || !imp || imp <= 0) { prev.textContent = ''; return; }
+  if (hasta < desde) { prev.textContent = 'El mes de fin debe ser igual o posterior al de inicio.'; prev.style.color = 'var(--red)'; return; }
+  const meses = apmGenerarRango(desde, hasta);
+  const total = meses.length * imp;
+  prev.style.color = 'var(--text-muted)';
+  prev.innerHTML = `${meses.length} mes${meses.length!==1?'es':''}: <strong>${meses.map(m=>fmtMesPag(m)).join(', ')}</strong><br>Total: <strong>${total}€</strong>`;
+}
+
+function apmGenerarRango(desde, hasta) {
+  const meses = [];
+  let [y, m] = desde.split('-').map(Number);
+  const [hy, hm] = hasta.split('-').map(Number);
+  while (y < hy || (y === hy && m <= hm)) {
+    meses.push(`${y}-${String(m).padStart(2,'0')}`);
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+  return meses;
+}
+
 function apmAnadirMes() {
   const hoy = new Date();
   const mesStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
@@ -3801,33 +3863,49 @@ function guardarPagosMensuales() {
   const atletaId = parseInt(document.getElementById('apm-atleta').value);
   const err = document.getElementById('apm-error');
   if (!atletaId) { err.textContent = 'Selecciona un atleta.'; return; }
+  const modo = document.getElementById('apm-modo').value;
 
-  const filas = document.querySelectorAll('#apm-meses-lista > div[id^="apm-fila-"]');
-  if (filas.length === 0) { err.textContent = 'Añade al menos un mes.'; return; }
+  let nuevos = [];
 
-  const nuevos = [];
-  for (const fila of filas) {
-    const fid = fila.id.replace('apm-fila-', '');
-    const mes = document.getElementById('apm-mes-' + fid)?.value;
-    const imp = parseFloat(document.getElementById('apm-imp-' + fid)?.value);
-    const est = document.getElementById('apm-est-' + fid)?.value || 'pendiente';
-    if (!mes) { err.textContent = 'Rellena el mes en todas las filas.'; return; }
-    if (isNaN(imp) || imp <= 0) { err.textContent = 'Introduce un importe válido en todas las filas.'; return; }
-    const yaExiste = pagos.some(p => p.atletaId===atletaId && p.modalidad==='mensual' && p.mes===mes);
-    if (yaExiste) { err.textContent = `Ya existe un pago de ${fmtMesPag(mes)} para este atleta.`; return; }
-    nuevos.push({ mes, importe: imp, estado: est });
+  if (modo === 'rango') {
+    const desde = document.getElementById('apm-rango-desde').value;
+    const hasta = document.getElementById('apm-rango-hasta').value;
+    const imp = parseFloat(document.getElementById('apm-rango-imp').value);
+    const est = document.getElementById('apm-rango-est').value;
+    if (!desde || !hasta) { err.textContent = 'Indica el mes de inicio y de fin.'; return; }
+    if (hasta < desde) { err.textContent = 'El mes de fin debe ser igual o posterior al de inicio.'; return; }
+    if (isNaN(imp) || imp <= 0) { err.textContent = 'Introduce un importe válido.'; return; }
+    const meses = apmGenerarRango(desde, hasta);
+    for (const mes of meses) {
+      if (pagos.some(p => p.atletaId===atletaId && p.modalidad==='mensual' && p.mes===mes)) {
+        err.textContent = `Ya existe un pago de ${fmtMesPag(mes)} para este atleta.`; return;
+      }
+      nuevos.push({ mes, importe: imp, estado: est });
+    }
+  } else {
+    const filas = document.querySelectorAll('#apm-meses-lista > div[id^="apm-fila-"]');
+    if (filas.length === 0) { err.textContent = 'Añade al menos un mes.'; return; }
+    for (const fila of filas) {
+      const fid = fila.id.replace('apm-fila-', '');
+      const mes = document.getElementById('apm-mes-' + fid)?.value;
+      const imp = parseFloat(document.getElementById('apm-imp-' + fid)?.value);
+      const est = document.getElementById('apm-est-' + fid)?.value || 'pendiente';
+      if (!mes) { err.textContent = 'Rellena el mes en todas las filas.'; return; }
+      if (isNaN(imp) || imp <= 0) { err.textContent = 'Introduce un importe válido en todas las filas.'; return; }
+      if (pagos.some(p => p.atletaId===atletaId && p.modalidad==='mensual' && p.mes===mes)) {
+        err.textContent = `Ya existe un pago de ${fmtMesPag(mes)} para este atleta.`; return;
+      }
+      nuevos.push({ mes, importe: imp, estado: est });
+    }
   }
 
   nuevos.forEach(r => {
     const [y, m] = r.mes.split('-');
     const ultimoDia = new Date(parseInt(y), parseInt(m), 0).getDate();
     pagos.push({
-      id: nextIdPagos++,
-      atletaId,
-      temporada: '26-27',
-      modalidad: 'mensual',
-      mes: r.mes,
-      label: fmtMesPag(r.mes),
+      id: nextIdPagos++, atletaId,
+      temporada: '26-27', modalidad: 'mensual',
+      mes: r.mes, label: fmtMesPag(r.mes),
       importe: r.importe,
       fechaLimite: `${r.mes}-${ultimoDia}`,
       estado: r.estado,
