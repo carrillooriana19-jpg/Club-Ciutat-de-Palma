@@ -959,6 +959,58 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- MODAL: editar evento de calendario -->
+<div class="modal-overlay" id="modal-editar-evento">
+  <div class="modal" style="width:min(560px,94vw)">
+    <h3>Editar evento</h3>
+    <div class="field-row">
+      <div class="field"><label>Fecha *</label><input type="date" id="ee-fecha"></div>
+      <div class="field"><label>Hora</label><input type="time" id="ee-hora"></div>
+      <div class="field"><label>Tipo</label>
+        <select id="ee-tipo" onchange="eeCambiarTipo()">
+          <option value="partido">Partido</option>
+          <option value="entrenamiento">Entrenamiento especial</option>
+          <option value="torneo">Torneo</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div id="ee-campos-partido">
+      <div class="field-row">
+        <div class="field"><label>¿Local o visitante?</label>
+          <select id="ee-localidad">
+            <option value="casa">Local</option>
+            <option value="visitante">Visitante</option>
+          </select>
+        </div>
+        <div class="field"><label>Equipo rival</label>
+          <div style="position:relative">
+            <input id="ee-rival" placeholder="Equipo rival..." autocomplete="off"
+              oninput="eeBuscarRival(this.value)" onblur="setTimeout(()=>eeCerrarRivales(),200)">
+            <div id="ee-rivales-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:100;max-height:160px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="ee-campo-titulo" style="display:none">
+      <div class="field"><label>Título *</label><input id="ee-titulo" placeholder="Título del evento..."></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Lugar</label><input id="ee-lugar" placeholder="Piscina Son Hugo..."></div>
+      <div class="field"><label>Entrenador responsable</label>
+        <select id="ee-entrenador"><option value="">Sin asignar</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Categorías (separadas por coma)</label><input id="ee-cats"></div>
+    <div class="field"><label>Notas</label><textarea id="ee-notas"></textarea></div>
+    <input type="hidden" id="ee-id">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('editar-evento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicionEvento()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: nuevo / editar entrenador -->
 <div class="modal-overlay" id="modal-add-pago-mensual">
   <div class="modal" style="width:min(500px,94vw)">
@@ -1356,7 +1408,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-19';
+const BUILD_ID = '2026-06-19-21';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2838,27 +2890,27 @@ const MODALIDADES = {
   '3plazos': {
     label: 'Opción A — 3 plazos',
     plazos: [
-      { num: 1, label: '1er plazo', importe: 320, fechaLimite: '2026-10-05' },
-      { num: 2, label: '2º plazo',  importe: 320, fechaLimite: '2026-12-15' },
-      { num: 3, label: '3er plazo', importe: 320, fechaLimite: '2027-02-15' }
+      { num: 1, label: '1er plazo', importe: 320, fechaInicio: '2026-09-15', fechaLimite: '2026-10-05' },
+      { num: 2, label: '2º plazo',  importe: 320, fechaInicio: '2026-12-01', fechaLimite: '2026-12-15' },
+      { num: 3, label: '3er plazo', importe: 320, fechaInicio: '2027-02-01', fechaLimite: '2027-02-15' }
     ]
   },
   '2plazos': {
     label: 'Opción B — 2 plazos',
     plazos: [
-      { num: 1, label: '1er plazo', importe: 475, fechaLimite: '2026-10-05' },
-      { num: 2, label: '2º plazo',  importe: 475, fechaLimite: '2027-02-15' }
+      { num: 1, label: '1er plazo', importe: 475, fechaInicio: '2026-09-15', fechaLimite: '2026-10-05' },
+      { num: 2, label: '2º plazo',  importe: 475, fechaInicio: '2027-02-01', fechaLimite: '2027-02-15' }
     ]
   },
   '1pago': {
     label: 'Opción C — Pago único',
     plazos: [
-      { num: 1, label: 'Pago único', importe: 940, fechaLimite: '2026-10-15' }
+      { num: 1, label: 'Pago único', importe: 940, fechaInicio: '2026-09-01', fechaLimite: '2026-10-15' }
     ]
   },
   'mensual': {
     label: 'Opción D — Pago mensual',
-    plazos: [] // Se generan mes a mes manualmente
+    plazos: []
   }
 };
 
@@ -2902,7 +2954,7 @@ function amPreview() {
   prev.innerHTML = m.plazos.map(p =>
     `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
       <span>${p.label}</span>
-      <span><strong>${p.importe}€</strong> · límite ${fmtFPag(p.fechaLimite)}</span>
+      <span><strong>${p.importe}€</strong> · ${fmtFPag(p.fechaInicio||p.fechaLimite)} – ${fmtFPag(p.fechaLimite)}</span>
     </div>`
   ).join('') + `<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Total: <strong>${m.plazos.reduce((s,p)=>s+p.importe,0)}€</strong></div>`;
 }
@@ -2917,7 +2969,12 @@ function asignarModalidad() {
   seleccionados.forEach(atletaId => {
     pagos = pagos.filter(p => !(p.atletaId === atletaId && p.temporada === '26-27'));
     m.plazos.forEach(plazo => {
-      pagos.push({ id: nextIdPagos++, atletaId, temporada: '26-27', modalidad: mod, plazo: plazo.num, label: plazo.label, importe: plazo.importe, fechaLimite: plazo.fechaLimite, estado: 'pendiente', fecha: null, notas: '' });
+      pagos.push({
+        id: nextIdPagos++, atletaId, temporada: '26-27', modalidad: mod,
+        plazo: plazo.num, label: plazo.label, importe: plazo.importe,
+        fechaInicio: plazo.fechaInicio || plazo.fechaLimite,
+        fechaLimite: plazo.fechaLimite, estado: 'pendiente', fecha: null, notas: ''
+      });
     });
   });
   save();
@@ -2936,7 +2993,7 @@ function generarPlazosTemporada() {
     const tieneAlgo = pagos.some(p => p.atletaId === a.id && p.temporada === '26-27');
     if (!tieneAlgo) {
       m.plazos.forEach(plazo => {
-        pagos.push({ id: nextIdPagos++, atletaId: a.id, temporada: '26-27', modalidad: mod, plazo: plazo.num, label: plazo.label, importe: plazo.importe, fechaLimite: plazo.fechaLimite, estado: 'pendiente', fecha: null, notas: '' });
+        pagos.push({ id: nextIdPagos++, atletaId: a.id, temporada: '26-27', modalidad: mod, plazo: plazo.num, label: plazo.label, importe: plazo.importe, fechaInicio: plazo.fechaInicio || plazo.fechaLimite, fechaLimite: plazo.fechaLimite, estado: 'pendiente', fecha: null, notas: '' });
         creados++;
       });
     }
@@ -2952,12 +3009,22 @@ function renderPgPagos() {
   const selMes = document.getElementById('pg-filter-mes-pago');
   const mesFiltro = selMes?.value || '';
 
-  // Poblar select de meses con los que tienen pagos
+  // Poblar select de meses — incluye todos los meses del rango de cada plazo
   if (selMes) {
-    const mesesDisponibles = [...new Set(pagos
-      .map(p => p.fechaLimite ? p.fechaLimite.slice(0,7) : (p.mes||null))
-      .filter(Boolean)
-    )].sort();
+    const mesesSet = new Set();
+    pagos.forEach(p => {
+      if (p.mes) { mesesSet.add(p.mes); return; }
+      const desde = (p.fechaInicio || p.fechaLimite || '').slice(0,7);
+      const hasta = (p.fechaLimite || '').slice(0,7);
+      if (!desde || !hasta) return;
+      let [y,m] = desde.split('-').map(Number);
+      const [hy,hm] = hasta.split('-').map(Number);
+      while (y < hy || (y===hy && m<=hm)) {
+        mesesSet.add(`${y}-${String(m).padStart(2,'0')}`);
+        m++; if (m>12) { m=1; y++; }
+      }
+    });
+    const mesesDisponibles = [...mesesSet].sort();
     const cur = selMes.value;
     selMes.innerHTML = '<option value="">Todos los meses</option>' +
       mesesDisponibles.map(m => `<option value="${m}"${cur===m?' selected':''}>${fmtMesPag(m)}</option>`).join('');
@@ -2975,10 +3042,15 @@ function renderPgPagos() {
   let lista = pagos.filter(p => {
     if (fm && p.modalidad !== fm) return false;
     if (fe && p.estado !== fe) return false;
-    // Filtro por mes: compara el mes de la fecha límite o del campo mes
+    // Filtro por mes: el plazo aparece en cualquier mes dentro de su rango
     if (mesFiltro) {
-      const mesPago = p.mes || (p.fechaLimite ? p.fechaLimite.slice(0,7) : null);
-      if (mesPago !== mesFiltro) return false;
+      if (p.mes) {
+        if (p.mes !== mesFiltro) return false;
+      } else {
+        const desde = (p.fechaInicio || p.fechaLimite || '').slice(0,7);
+        const hasta = (p.fechaLimite || '').slice(0,7);
+        if (!desde || !hasta || mesFiltro < desde || mesFiltro > hasta) return false;
+      }
     }
     const a = atletas.find(x => x.id === p.atletaId);
     if (q && a && !a.nombre.toLowerCase().includes(q)) return false;
@@ -3006,7 +3078,7 @@ function renderPgPagos() {
         <td style="font-size:12px">${esc(mod?mod.label:p.modalidad||'—')}</td>
         <td style="font-size:12px">${esc(p.label||('Plazo '+p.plazo))}</td>
         <td><strong>${p.importe}€</strong></td>
-        <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(p.fechaLimite)}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${p.fechaInicio ? fmtFPag(p.fechaInicio) + ' – ' + fmtFPag(p.fechaLimite) : fmtFPag(p.fechaLimite)}</td>
         <td>${badgePP(p.estado)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(p.fecha)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${esc(p.notas||'')}</td>
@@ -3466,6 +3538,99 @@ async function exportarAtletasPDF() {
 const TIPO_EVENTO = { partido: 'Partido', entrenamiento: 'Entrenamiento especial', torneo: 'Torneo', otro: 'Otro' };
 const COLOR_TIPO = { partido: '#1d8a4a', entrenamiento: '#1a5fa8', torneo: '#c8a020', otro: '#6b7280' };
 
+function eeCambiarTipo() {
+  const tipo = document.getElementById('ee-tipo').value;
+  document.getElementById('ee-campos-partido').style.display = tipo === 'partido' ? '' : 'none';
+  document.getElementById('ee-campo-titulo').style.display = tipo === 'partido' ? 'none' : '';
+}
+
+function eeBuscarRival(q) {
+  const dd = document.getElementById('ee-rivales-dropdown'); if (!dd) return;
+  if (!q.trim()) { dd.style.display = 'none'; return; }
+  const ql = q.toLowerCase();
+  const coincidencias = rivalesEquipos.filter(r => r.toLowerCase().includes(ql));
+  const exacto = rivalesEquipos.some(r => r.toLowerCase() === ql);
+  let html = coincidencias.map(r =>
+    `<div style="padding:8px 12px;cursor:pointer;font-size:13px" onmousedown="eeSeleccionarRival('${esc(r)}')"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">${esc(r)}</div>`
+  ).join('');
+  if (!exacto && q.trim()) {
+    html += `<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--navy);border-top:1px solid var(--border)"
+      onmousedown="eeSeleccionarRival('${esc(q.trim())}')"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      + Guardar "${esc(q.trim())}" como nuevo equipo</div>`;
+  }
+  dd.innerHTML = html || '<div style="padding:8px 12px;font-size:13px;color:var(--text-muted)">Sin coincidencias</div>';
+  dd.style.display = '';
+}
+
+function eeSeleccionarRival(nombre) {
+  const input = document.getElementById('ee-rival'); if (input) input.value = nombre;
+  const dd = document.getElementById('ee-rivales-dropdown'); if (dd) dd.style.display = 'none';
+  if (!rivalesEquipos.includes(nombre)) { rivalesEquipos.push(nombre); rivalesEquipos.sort((a,b)=>a.localeCompare(b)); save(); }
+}
+
+function eeCerrarRivales() {
+  const dd = document.getElementById('ee-rivales-dropdown'); if (dd) dd.style.display = 'none';
+}
+
+function editarEvento(id) {
+  const ev = eventos.find(x=>x.id===id); if (!ev) return;
+  // Poblar entrenadores
+  const selEnt = document.getElementById('ee-entrenador');
+  selEnt.innerHTML = '<option value="">Sin asignar</option>' +
+    entrenadores.filter(e=>e.activo!==false).sort((a,b)=>a.nombre.localeCompare(b.nombre))
+      .map(e=>`<option value="${esc(e.nombre)}">${esc(e.nombre)}</option>`).join('');
+  // Rellenar campos
+  document.getElementById('ee-id').value = id;
+  document.getElementById('ee-fecha').value = ev.fecha;
+  document.getElementById('ee-hora').value = ev.hora || '';
+  document.getElementById('ee-tipo').value = ev.tipo || 'partido';
+  document.getElementById('ee-localidad').value = ev.localidad || 'casa';
+  document.getElementById('ee-rival').value = ev.rival || '';
+  document.getElementById('ee-titulo').value = ev.titulo || '';
+  document.getElementById('ee-lugar').value = ev.lugar || '';
+  selEnt.value = ev.entrenador || '';
+  document.getElementById('ee-cats').value = ev.categorias || '';
+  document.getElementById('ee-notas').value = ev.notas || '';
+  eeCambiarTipo();
+  openModal('editar-evento');
+}
+
+function guardarEdicionEvento() {
+  const id = parseInt(document.getElementById('ee-id').value);
+  const ev = eventos.find(x=>x.id===id); if (!ev) return;
+  const tipo = document.getElementById('ee-tipo').value;
+  const fecha = document.getElementById('ee-fecha').value;
+  if (!fecha) return;
+  const esPartido = tipo === 'partido';
+  let titulo = '';
+  let rival = '';
+  let localidad = '';
+  if (esPartido) {
+    rival = (document.getElementById('ee-rival').value||'').trim();
+    localidad = document.getElementById('ee-localidad').value;
+    titulo = localidad === 'casa' ? `C.N Ciutat de Palma vs ${rival}` : `${rival} vs C.N Ciutat de Palma`;
+    if (rival && !rivalesEquipos.includes(rival)) { rivalesEquipos.push(rival); rivalesEquipos.sort((a,b)=>a.localeCompare(b)); }
+  } else {
+    titulo = (document.getElementById('ee-titulo').value||'').trim();
+  }
+  ev.fecha = fecha;
+  ev.hora = document.getElementById('ee-hora').value || '';
+  ev.tipo = tipo;
+  ev.titulo = titulo;
+  ev.rival = rival;
+  ev.localidad = localidad;
+  ev.lugar = document.getElementById('ee-lugar').value.trim();
+  ev.entrenador = document.getElementById('ee-entrenador').value || '';
+  ev.categorias = document.getElementById('ee-cats').value.trim();
+  ev.notas = document.getElementById('ee-notas').value.trim();
+  eventos.sort((a,b) => a.fecha.localeCompare(b.fecha));
+  save();
+  closeModal('editar-evento');
+  renderCalendario();
+}
+
 function calToggleTipoPartido() {
   const tipo = document.getElementById('cal-nuevo-tipo').value;
   const esPartido = tipo === 'partido';
@@ -3591,9 +3756,13 @@ function renderCalendario() {
   const panel = document.getElementById('cal-admin-panel');
   if (panel) panel.style.display = esAdmin ? '' : 'none';
 
-  // Poblar select de entrenadores y resetear tipo al abrir
-  calPoblarEntrenadores();
-  calToggleTipoPartido();
+  if (esAdmin) {
+    calPoblarEntrenadores();
+    calToggleTipoPartido();
+  }
+
+  // Poblar select de categorías con las que existen en eventos
+  const selCat = document.getElementById('cal-filtro-cat');
   if (selCat) {
     const curCat = selCat.value;
     const cats = [...new Set(eventos.filter(e => e.categorias).map(e => e.categorias.split(',').map(c=>c.trim())).flat().filter(Boolean))].sort();
@@ -3677,7 +3846,10 @@ function renderCalendario() {
         <div style="font-size:12.5px;color:var(--text-muted)">${fmtFechaEvento(ev.fecha)}${ev.hora ? ' · ' + ev.hora + 'h' : ''}${ev.lugar ? ' · ' + esc(ev.lugar) : ''}</div>
         ${ev.notas ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;padding:8px;background:var(--bg);border-radius:6px">${esc(ev.notas)}</div>` : ''}
       </div>
-      ${esAdmin ? `<button class="btn btn-sm btn-danger" onclick="eliminarEvento(${ev.id})" style="align-self:flex-start;flex-shrink:0">✕</button>` : ''}
+      ${esAdmin ? `<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        <button class="btn btn-sm" onclick="editarEvento(${ev.id})" style="align-self:flex-start">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarEvento(${ev.id})" style="align-self:flex-start">✕</button>
+      </div>` : ''}
     </div>`;
   };
 
