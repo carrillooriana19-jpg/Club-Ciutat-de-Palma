@@ -1437,7 +1437,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-24';
+const BUILD_ID = '2026-06-19-25';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2870,6 +2870,7 @@ function renderPgResumen() {
   const totalDeuda = activos.reduce((s, a) => s + deudaAtleta(a.id) + deudaCargo(a.id), 0);
   const paganCuota = activos.filter(a => a.paga !== false).length;
   const vencidos = pagos.filter(p => p.estado==='vencido').length + cargoPagos.filter(c => c.estado==='vencido').length;
+  const totalRecaudado = pagos.filter(p=>p.estado==='pagado').reduce((s,p)=>s+p.importe,0);
 
   const grid = document.getElementById('pg-stats-grid'); if (!grid) return;
   grid.innerHTML = `
@@ -2877,34 +2878,70 @@ function renderPgResumen() {
     <div class="pg-stat-card"><div class="pg-stat-val">${paganCuota}</div><div class="pg-stat-lbl">Pagan cuota</div></div>
     <div class="pg-stat-card"><div class="pg-stat-val" style="color:var(--red)">${totalDeuda}€</div><div class="pg-stat-lbl">Deuda total</div></div>
     <div class="pg-stat-card"><div class="pg-stat-val" style="color:var(--red)">${vencidos}</div><div class="pg-stat-lbl">Pagos vencidos</div></div>
+    <div class="pg-stat-card"><div class="pg-stat-val" style="color:var(--ok)">${totalRecaudado}€</div><div class="pg-stat-lbl">Total recaudado</div></div>
   `;
 
-  // Impagados recientes (últimos 5)
+  // Impagados recientes (pendientes y vencidos, ordenados por fecha límite)
   const ip = document.getElementById('pg-resumen-impagados'); if (!ip) return;
-  const recientes = pagos.filter(p => p.estado==='vencido'||p.estado==='pendiente').sort((a,b) => b.mes.localeCompare(a.mes)).slice(0,5);
-  ip.innerHTML = recientes.length ? recientes.map(p => { const a = atletas.find(x=>x.id===p.atletaId); return `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:13px"><strong>${esc(a?a.nombre:'?')}</strong> — ${fmtMesPag(p.mes)} — <span style="color:var(--red)">${p.importe}€</span></div>`; }).join('') : '<div style="color:var(--text-muted);font-size:13px">Sin impagados recientes.</div>';
+  const recientes = pagos
+    .filter(p => p.estado==='vencido' || p.estado==='pendiente')
+    .sort((a,b) => (a.fechaLimite||'').localeCompare(b.fechaLimite||''))
+    .slice(0, 5);
+  ip.innerHTML = recientes.length
+    ? recientes.map(p => {
+        const a = atletas.find(x=>x.id===p.atletaId);
+        const etiqueta = p.label || fmtMesPag(p.mes) || p.fechaLimite || '';
+        return `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <strong>${esc(a?a.nombre:'?')}</strong> — ${esc(etiqueta)} — <span style="color:var(--red)">${p.importe}€</span>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text-muted);font-size:13px">Sin impagados.</div>';
 
   // Mayor deuda
   const dd = document.getElementById('pg-resumen-deuda'); if (!dd) return;
-  const porDeuda = activos.map(a => ({ a, d: deudaAtleta(a.id)+deudaCargo(a.id) })).filter(x=>x.d>0).sort((x,y)=>y.d-x.d).slice(0,5);
-  dd.innerHTML = porDeuda.length ? porDeuda.map(({a,d}) => `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:13px"><strong>${esc(a.nombre)}</strong> — <span style="color:var(--red)">${d}€</span></div>`).join('') : '<div style="color:var(--text-muted);font-size:13px">Ningún atleta con deuda.</div>';
+  const porDeuda = activos
+    .map(a => ({ a, d: deudaAtleta(a.id) + deudaCargo(a.id) }))
+    .filter(x => x.d > 0)
+    .sort((x,y) => y.d - x.d)
+    .slice(0, 5);
+  dd.innerHTML = porDeuda.length
+    ? porDeuda.map(({a,d}) => `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:13px"><strong>${esc(a.nombre)}</strong> — <span style="color:var(--red)">${d}€</span></div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px">Ningún atleta con deuda.</div>';
 
   // Cumpleaños del mes
   const cb = document.getElementById('pg-resumen-cumpleanos'); if (!cb) return;
   const mesAct = new Date().getMonth() + 1;
-  const cumple = activos.filter(a => { if (!a.fechaNacimiento) return false; const m = parseInt((a.fechaNacimiento||'').split('/')[1]||0); return m === mesAct; });
-  cb.innerHTML = cumple.length ? cumple.map(a => `<div style="padding:4px 0;font-size:13px">🎂 <strong>${esc(a.nombre)}</strong> — ${a.fechaNacimiento||''}</div>`).join('') : '<div style="color:var(--text-muted);font-size:13px">Ningún cumpleaños este mes.</div>';
-
-  // Gráfico simple de ingresos (últimos 4 meses)
-  const gr = document.getElementById('pg-resumen-grafico'); if (!gr) return;
-  const meses = []; const hoy = new Date();
-  for (let i = 3; i >= 0; i--) { const d = new Date(hoy.getFullYear(), hoy.getMonth()-i, 1); meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }
-  const barras = meses.map(m => {
-    const total = pagos.filter(p => p.mes===m && p.estado==='pagado').reduce((s,p)=>s+p.importe,0);
-    return { mes: m, total };
+  const cumple = activos.filter(a => {
+    if (!a.fechaNacimiento) return false;
+    const partes = a.fechaNacimiento.split('/');
+    return parseInt(partes[1]||0) === mesAct;
+  }).sort((a,b) => {
+    const da = parseInt((a.fechaNacimiento||'').split('/')[0]||0);
+    const db = parseInt((b.fechaNacimiento||'').split('/')[0]||0);
+    return da - db;
   });
-  const maxTotal = Math.max(...barras.map(b=>b.total), 1);
-  gr.innerHTML = `<div style="display:flex;gap:10px;align-items:flex-end;height:80px">${barras.map(b=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="background:var(--navy);width:100%;height:${Math.round((b.total/maxTotal)*70)}px;min-height:2px;border-radius:3px 3px 0 0"></div><div style="font-size:10px;color:var(--text-muted)">${fmtMesPag(b.mes).split(' ')[0].slice(0,3)}</div><div style="font-size:10px;font-weight:600">${b.total}€</div></div>`).join('')}</div>`;
+  cb.innerHTML = cumple.length
+    ? cumple.map(a => `<div style="padding:4px 0;font-size:13px">🎂 <strong>${esc(a.nombre)}</strong> — ${a.fechaNacimiento}</div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px">Ningún cumpleaños este mes.</div>';
+
+  // Gráfico de pagos por modalidad
+  const gr = document.getElementById('pg-resumen-grafico'); if (!gr) return;
+  const mods = ['3plazos','2plazos','1pago','mensual'];
+  const modLabels = { '3plazos':'3 plazos','2plazos':'2 plazos','1pago':'Único','mensual':'Mensual' };
+  const modColors = { '3plazos':'var(--navy)','2plazos':'var(--gold)','1pago':'var(--ok)','mensual':'#6b7280' };
+  const atletasAsignados = mods.map(mod => ({
+    mod,
+    count: [...new Set(pagos.filter(p=>p.modalidad===mod).map(p=>p.atletaId))].length
+  })).filter(x => x.count > 0);
+  const maxCount = Math.max(...atletasAsignados.map(x=>x.count), 1);
+  gr.innerHTML = atletasAsignados.length
+    ? `<div style="display:flex;gap:10px;align-items:flex-end;height:80px">${atletasAsignados.map(x=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="background:${modColors[x.mod]};width:100%;height:${Math.round((x.count/maxCount)*70)}px;min-height:4px;border-radius:3px 3px 0 0"></div>
+          <div style="font-size:10px;color:var(--text-muted);text-align:center">${modLabels[x.mod]}</div>
+          <div style="font-size:10px;font-weight:600">${x.count}</div>
+        </div>`).join('')}</div>`
+    : '<div style="color:var(--text-muted);font-size:13px">Sin atletas asignados a una modalidad todavía.</div>';
 
   updatePagosNavBadge();
 }
@@ -4375,3 +4412,4 @@ initAuth();
 
 </body>
 </html>
+                                  
