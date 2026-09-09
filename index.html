@@ -202,6 +202,7 @@ body {
 }
 .page-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 26px; }
 .section { display: none; }
+input[type="time"] { -webkit-appearance: none; appearance: none; }
 /* Sub-navegación de la sección Pagos */
 .pg-subnav { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:18px; border-bottom:2px solid var(--border); padding-bottom:8px; }
 .pg-subnav-item { padding:6px 14px; border-radius:var(--radius-sm) var(--radius-sm) 0 0; border:1px solid var(--border); background:var(--card); color:var(--text-muted); font-size:13px; cursor:pointer; }
@@ -707,7 +708,7 @@ tr:last-child td { border-bottom: none; }
             <strong style="font-size:15px">Añadir evento</strong>
             <div class="field-row" style="margin-top:12px">
               <div class="field"><label>Fecha *</label><input type="date" id="cal-nueva-fecha"></div>
-              <div class="field"><label>Hora</label><input type="time" id="cal-nueva-hora"></div>
+              <div class="field"><label>Hora</label><input type="time" id="cal-nueva-hora" data-time-24="true"></div>
               <div class="field"><label>Tipo</label>
                 <select id="cal-nuevo-tipo" onchange="calToggleTipoPartido()">
                   <option value="partido">Partido</option>
@@ -752,7 +753,10 @@ tr:last-child td { border-bottom: none; }
                 </select>
               </div>
             </div>
-            <div class="field"><label>Categorías (separadas por coma)</label><input id="cal-nuevo-cats" placeholder="Todas, o Benjamín, Alevín..."></div>
+            <div class="field">
+              <label>Categorías que participan</label>
+              <div id="cal-cats-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+            </div>
             <div class="field"><label>Notas</label><textarea id="cal-nuevo-notas" placeholder="Convocatoria, equipación, indicaciones..."></textarea></div>
             <div class="modal-actions" style="padding:0;margin-top:12px">
               <button class="btn btn-primary" onclick="guardarEvento()">Añadir evento</button>
@@ -959,13 +963,35 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- MODAL: editar pedido de uniformidad -->
+<div class="modal-overlay" id="modal-editar-pedido-unif">
+  <div class="modal" style="width:min(580px,94vw)">
+    <h3>Editar pedido de uniformidad</h3>
+    <div class="field"><label>Atleta *</label>
+      <select id="epu-atleta"></select>
+    </div>
+    <div style="margin:14px 0 8px;font-size:13px;font-weight:600;color:var(--navy)">Prendas solicitadas</div>
+    <div id="epu-prendas-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--navy);color:#fff;border-radius:var(--radius);margin-bottom:12px">
+      <span style="font-size:14px;font-weight:600">Total del pedido</span>
+      <span style="font-size:20px;font-weight:700" id="epu-total-display">0€</span>
+    </div>
+    <div class="field"><label>Notas adicionales</label><textarea id="epu-notas" placeholder="Talla, color especial, observaciones..."></textarea></div>
+    <input type="hidden" id="epu-id">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('editar-pedido-unif')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicionPedidoUnif()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: editar evento de calendario -->
 <div class="modal-overlay" id="modal-editar-evento">
   <div class="modal" style="width:min(560px,94vw)">
     <h3>Editar evento</h3>
     <div class="field-row">
       <div class="field"><label>Fecha *</label><input type="date" id="ee-fecha"></div>
-      <div class="field"><label>Hora</label><input type="time" id="ee-hora"></div>
+      <div class="field"><label>Hora</label><input type="time" id="ee-hora" data-time-24="true"></div>
       <div class="field"><label>Tipo</label>
         <select id="ee-tipo" onchange="eeCambiarTipo()">
           <option value="partido">Partido</option>
@@ -1001,7 +1027,10 @@ tr:last-child td { border-bottom: none; }
         <select id="ee-entrenador"><option value="">Sin asignar</option></select>
       </div>
     </div>
-    <div class="field"><label>Categorías (separadas por coma)</label><input id="ee-cats"></div>
+    <div class="field">
+      <label>Categorías que participan</label>
+      <div id="ee-cats-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+    </div>
     <div class="field"><label>Notas</label><textarea id="ee-notas"></textarea></div>
     <input type="hidden" id="ee-id">
     <div class="modal-actions">
@@ -1408,7 +1437,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-23';
+const BUILD_ID = '2026-06-19-24';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -3591,7 +3620,7 @@ function editarEvento(id) {
   document.getElementById('ee-titulo').value = ev.titulo || '';
   document.getElementById('ee-lugar').value = ev.lugar || '';
   selEnt.value = ev.entrenador || '';
-  document.getElementById('ee-cats').value = ev.categorias || '';
+  document.getElementById('ee-cats-wrap') && calPoblarCategorias('ee-cats-wrap', ev.categorias || '');
   document.getElementById('ee-notas').value = ev.notas || '';
   eeCambiarTipo();
   openModal('editar-evento');
@@ -3623,7 +3652,7 @@ function guardarEdicionEvento() {
   ev.localidad = localidad;
   ev.lugar = document.getElementById('ee-lugar').value.trim();
   ev.entrenador = document.getElementById('ee-entrenador').value || '';
-  ev.categorias = document.getElementById('ee-cats').value.trim();
+  ev.categorias = calGetCategorias('ee-cats-wrap');
   ev.notas = document.getElementById('ee-notas').value.trim();
   eventos.sort((a,b) => a.fecha.localeCompare(b.fecha));
   save();
@@ -3677,11 +3706,41 @@ function calCerrarRivales() {
   const dd = document.getElementById('cal-rivales-dropdown'); if (dd) dd.style.display = 'none';
 }
 
+function calPoblarCategorias(wrapId, seleccionadas) {
+  const wrap = document.getElementById(wrapId); if (!wrap) return;
+  const sels = new Set((seleccionadas||'').split(',').map(c=>c.trim()).filter(Boolean));
+  wrap.innerHTML = ['Todas', ...CATEGORIAS_FIJAS].map(cat => {
+    const checked = cat === 'Todas' ? sels.size === 0 : sels.has(cat);
+    return `<label style="display:flex;align-items:center;gap:4px;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:${checked?'var(--navy)':'var(--card)'};color:${checked?'#fff':'var(--text)'}" id="calcat-wrap-${wrapId}-${cat.replace(/\s/g,'_')}">
+      <input type="checkbox" id="calcat-${wrapId}-${cat.replace(/\s/g,'_')}" value="${esc(cat)}" ${checked?'checked':''} onchange="calActualizarCatLabel('${wrapId}')" style="display:none">
+      ${esc(cat)}
+    </label>`;
+  }).join('');
+}
+
+function calActualizarCatLabel(wrapId) {
+  const wrap = document.getElementById(wrapId); if (!wrap) return;
+  wrap.querySelectorAll('label').forEach(lbl => {
+    const cb = lbl.querySelector('input');
+    lbl.style.background = cb.checked ? 'var(--navy)' : 'var(--card)';
+    lbl.style.color = cb.checked ? '#fff' : 'var(--text)';
+  });
+}
+
+function calGetCategorias(wrapId) {
+  const wrap = document.getElementById(wrapId); if (!wrap) return '';
+  const checked = [...wrap.querySelectorAll('input:checked')].map(cb => cb.value);
+  if (checked.includes('Todas') || checked.length === 0) return '';
+  return checked.join(', ');
+}
+
 function calPoblarEntrenadores() {
-  const sel = document.getElementById('cal-nuevo-entrenador'); if (!sel) return;
-  sel.innerHTML = '<option value="">Sin asignar</option>' +
-    entrenadores.filter(e=>e.activo!==false).sort((a,b)=>a.nombre.localeCompare(b.nombre))
-      .map(e=>`<option value="${esc(e.nombre)}">${esc(e.nombre)}</option>`).join('');
+  ['cal-nuevo-entrenador','ee-entrenador'].forEach(id => {
+    const sel = document.getElementById(id); if (!sel) return;
+    sel.innerHTML = '<option value="">Sin asignar</option>' +
+      entrenadores.filter(e=>e.activo!==false).sort((a,b)=>a.nombre.localeCompare(b.nombre))
+        .map(e=>`<option value="${esc(e.nombre)}">${esc(e.nombre)}</option>`).join('');
+  });
 }
 
 function guardarEvento() {
@@ -3719,13 +3778,14 @@ function guardarEvento() {
     tipo, titulo, rival, localidad,
     entrenador: document.getElementById('cal-nuevo-entrenador').value || '',
     lugar: document.getElementById('cal-nuevo-lugar').value.trim(),
-    categorias: document.getElementById('cal-nuevo-cats').value.trim(),
+    categorias: calGetCategorias('cal-cats-wrap'),
     notas: document.getElementById('cal-nuevo-notas').value.trim()
   });
   eventos.sort((a,b) => a.fecha.localeCompare(b.fecha));
   save();
   // Limpiar formulario
-  ['cal-nueva-fecha','cal-nueva-hora','cal-nuevo-rival','cal-nuevo-titulo','cal-nuevo-lugar','cal-nuevo-cats','cal-nuevo-notas'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['cal-nueva-fecha','cal-nueva-hora','cal-nuevo-rival','cal-nuevo-titulo','cal-nuevo-lugar','cal-nuevo-notas'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  calPoblarCategorias('cal-cats-wrap', '');
   document.getElementById('cal-nuevo-tipo').value = 'partido';
   document.getElementById('cal-nueva-localidad').value = 'casa';
   calToggleTipoPartido();
@@ -3758,6 +3818,7 @@ function renderCalendario() {
 
   if (esAdmin) {
     calPoblarEntrenadores();
+    calPoblarCategorias('cal-cats-wrap', '');
     calToggleTipoPartido();
   }
 
@@ -3843,7 +3904,7 @@ function renderCalendario() {
           ${ev.entrenador ? `<span style="font-size:11px;color:var(--text-muted)">👤 ${esc(ev.entrenador)}</span>` : ''}
         </div>
         <div style="font-weight:600;font-size:15px;color:var(--navy);margin-bottom:2px">${esc(ev.titulo)}</div>
-        <div style="font-size:12.5px;color:var(--text-muted)">${fmtFechaEvento(ev.fecha)}${ev.hora ? ' · ' + ev.hora + 'h' : ''}${ev.lugar ? ' · ' + esc(ev.lugar) : ''}</div>
+        <div style="font-size:12.5px;color:var(--text-muted)">${fmtFechaEvento(ev.fecha)}${ev.hora ? ' · ' + ev.hora.slice(0,5) + 'h' : ''}${ev.lugar ? ' · ' + esc(ev.lugar) : ''}</div>
         ${ev.notas ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;padding:8px;background:var(--bg);border-radius:6px">${esc(ev.notas)}</div>` : ''}
       </div>
       ${esAdmin ? `<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
@@ -3969,6 +4030,103 @@ function unifActualizarTotal() {
   if (el) el.textContent = total + '€';
 }
 
+function epuActualizarTotal() {
+  let total = 0;
+  CATALOGO_UNIF.forEach(p => {
+    const cant = parseInt(document.getElementById('epu-cant-' + p.id)?.value||0)||0;
+    if (cant > 0) total += cant * p.precio;
+  });
+  const el = document.getElementById('epu-total-display');
+  if (el) el.textContent = total + '€';
+}
+
+function epuTogglePrenda(id) {
+  const row = document.getElementById('epu-detalle-' + id);
+  const cantEl = document.getElementById('epu-cant-' + id);
+  if (!row || !cantEl) return;
+  const activo = row.style.display !== 'none';
+  cantEl.value = activo ? 0 : 1;
+  row.style.display = activo ? 'none' : '';
+  const btn = document.getElementById('epu-btn-' + id);
+  if (btn) { btn.style.borderColor = activo ? 'var(--border)' : 'var(--navy)'; btn.style.background = activo ? 'var(--card)' : '#e8edf5'; }
+  epuActualizarTotal();
+}
+
+function editarPedidoUnif(id) {
+  const p = pedidosUnif.find(x=>x.id===id); if (!p) return;
+  document.getElementById('epu-id').value = id;
+  // Poblar atletas
+  const sel = document.getElementById('epu-atleta');
+  sel.innerHTML = atletas.filter(a=>a.estado==='activo').sort((a,b)=>a.nombre.localeCompare(b.nombre))
+    .map(a=>`<option value="${a.id}">${esc(a.nombre)}</option>`).join('');
+  sel.value = p.atletaId;
+  // Poblar grid de prendas con valores actuales
+  const tallasOpts = TALLAS_UNIF.map(t=>`<option value="${t}">${t}</option>`).join('');
+  const grid = document.getElementById('epu-prendas-grid');
+  grid.innerHTML = CATALOGO_UNIF.map(pr => {
+    const det = p.prendas && p.prendas[pr.id];
+    const cant = det ? det.cantidad : 0;
+    const talla = det ? (det.talla||'') : '';
+    const activo = cant > 0;
+    return `
+    <div id="epu-btn-${pr.id}" onclick="epuTogglePrenda('${pr.id}')"
+      style="border:${activo?'2px solid var(--navy)':'1px solid var(--border)'};border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;background:${activo?'#e8edf5':'var(--card)'};transition:all .15s">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:500">${esc(pr.nombre)}</span>
+        <strong style="color:var(--navy);font-size:13px">${pr.precio}€</strong>
+      </div>
+      <div id="epu-detalle-${pr.id}" style="display:${activo?'':'none'};margin-top:6px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label style="font-size:11px;color:var(--text-muted)">Cantidad</label>
+          <input type="number" id="epu-cant-${pr.id}" value="${cant||1}" min="0" max="10"
+            style="width:54px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px"
+            onclick="event.stopPropagation()" oninput="event.stopPropagation();epuActualizarTotal()">
+          ${pr.tallas ? `
+          <label style="font-size:11px;color:var(--text-muted)">Talla</label>
+          <select id="epu-talla-${pr.id}"
+            style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:13px"
+            onclick="event.stopPropagation()" onchange="event.stopPropagation()">
+            <option value="">— talla —</option>${tallasOpts}
+          </select>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // Seleccionar tallas guardadas
+  CATALOGO_UNIF.forEach(pr => {
+    const det = p.prendas && p.prendas[pr.id];
+    if (det && det.talla && pr.tallas) {
+      const selTalla = document.getElementById('epu-talla-' + pr.id);
+      if (selTalla) selTalla.value = det.talla;
+    }
+  });
+  document.getElementById('epu-notas').value = p.notas || '';
+  epuActualizarTotal();
+  openModal('editar-pedido-unif');
+}
+
+function guardarEdicionPedidoUnif() {
+  const id = parseInt(document.getElementById('epu-id').value);
+  const p = pedidosUnif.find(x=>x.id===id); if (!p) return;
+  p.atletaId = parseInt(document.getElementById('epu-atleta').value);
+  const prendas = {};
+  let total = 0;
+  CATALOGO_UNIF.forEach(pr => {
+    const cant = parseInt(document.getElementById('epu-cant-' + pr.id)?.value||0)||0;
+    if (cant > 0) {
+      const talla = pr.tallas ? (document.getElementById('epu-talla-' + pr.id)?.value||'') : '';
+      prendas[pr.id] = { cantidad: cant, talla };
+      total += cant * pr.precio;
+    }
+  });
+  p.prendas = prendas;
+  p.total = total;
+  p.notas = document.getElementById('epu-notas').value.trim();
+  save();
+  closeModal('editar-pedido-unif');
+  renderUniformidad();
+}
+
 function unifTogglePrenda(id) {
   const row = document.getElementById('unif-detalle-' + id);
   const cantEl = document.getElementById('unif-cant-' + id);
@@ -4047,7 +4205,8 @@ function renderUniformidad() {
           <span style="color:${p.entregado?'var(--navy)':'var(--text-muted)'}">📦 Entregado</span>
         </label>
         ${completo ? '<span style="font-size:12px;color:var(--ok);font-weight:600;margin-left:4px">✓ Completado</span>' : ''}
-        <button class="btn btn-sm btn-danger" onclick="eliminarPedidoUnif(${p.id})" style="margin-left:auto">Eliminar</button>
+        <button class="btn btn-sm" onclick="editarPedidoUnif(${p.id})" style="margin-left:auto">✏ Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarPedidoUnif(${p.id})">Eliminar</button>
       </div>
     </div>`;
   }).join('');
