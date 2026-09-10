@@ -202,7 +202,6 @@ body {
 }
 .page-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 26px; }
 .section { display: none; }
-input[type="time"] { -webkit-appearance: none; appearance: none; }
 /* Sub-navegación de la sección Pagos */
 .pg-subnav { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:18px; border-bottom:2px solid var(--border); padding-bottom:8px; }
 .pg-subnav-item { padding:6px 14px; border-radius:var(--radius-sm) var(--radius-sm) 0 0; border:1px solid var(--border); background:var(--card); color:var(--text-muted); font-size:13px; cursor:pointer; }
@@ -708,7 +707,7 @@ tr:last-child td { border-bottom: none; }
             <strong style="font-size:15px">Añadir evento</strong>
             <div class="field-row" style="margin-top:12px">
               <div class="field"><label>Fecha *</label><input type="date" id="cal-nueva-fecha"></div>
-              <div class="field"><label>Hora</label><input type="time" id="cal-nueva-hora" data-time-24="true"></div>
+              <div class="field"><label>Hora (formato 24h)</label><input type="text" id="cal-nueva-hora" placeholder="Ej. 18:30" maxlength="5" pattern="\d{1,2}:\d{2}" oninput="this.value=this.value.replace(/[^0-9:]/g,'')"></div>
               <div class="field"><label>Tipo</label>
                 <select id="cal-nuevo-tipo" onchange="calToggleTipoPartido()">
                   <option value="partido">Partido</option>
@@ -991,7 +990,7 @@ tr:last-child td { border-bottom: none; }
     <h3>Editar evento</h3>
     <div class="field-row">
       <div class="field"><label>Fecha *</label><input type="date" id="ee-fecha"></div>
-      <div class="field"><label>Hora</label><input type="time" id="ee-hora" data-time-24="true"></div>
+      <div class="field"><label>Hora (formato 24h)</label><input type="text" id="ee-hora" placeholder="Ej. 18:30" maxlength="5" pattern="\d{1,2}:\d{2}" oninput="this.value=this.value.replace(/[^0-9:]/g,'')"></div>
       <div class="field"><label>Tipo</label>
         <select id="ee-tipo" onchange="eeCambiarTipo()">
           <option value="partido">Partido</option>
@@ -1437,7 +1436,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-25';
+const BUILD_ID = '2026-06-19-26';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -4412,4 +4411,3 @@ initAuth();
 
 </body>
 </html>
-                                  
