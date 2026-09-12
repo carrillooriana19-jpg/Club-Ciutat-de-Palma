@@ -873,6 +873,7 @@ tr:last-child td { border-bottom: none; }
             </div>
             <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-primary btn-sm" onclick="openModal('asignar-modalidad')">Asignar modalidad a atleta</button>
+              <button class="btn btn-sm" onclick="abrirCambiarModalidad()">↺ Cambiar modalidad</button>
               <button class="btn btn-sm" onclick="generarPlazosTemporada()">Generar plazos pendientes</button>
               <button class="btn btn-sm" onclick="openModal('add-pago-mensual')">+ Añadir pago mensual</button>
             </div>
@@ -1257,6 +1258,31 @@ tr:last-child td { border-bottom: none; }
 
 
 <!-- MODALES DE PAGOS -->
+<div class="modal-overlay" id="modal-cambiar-modalidad">
+  <div class="modal" style="width:min(560px,94vw)">
+    <h3>Cambiar modalidad de pago</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Selecciona el atleta y la nueva modalidad. Los plazos actuales pendientes se eliminarán y se crearán los nuevos. Los plazos ya pagados se conservan.</p>
+    <div class="field"><label>Atleta *</label>
+      <select id="cm-atleta" onchange="cmMostrarActual()"></select>
+    </div>
+    <div id="cm-actual" style="font-size:13px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;display:none"></div>
+    <div class="field"><label>Nueva modalidad *</label>
+      <select id="cm-modalidad" onchange="cmPreview()">
+        <option value="3plazos">Opción A — 3 plazos de 320€ (total 960€)</option>
+        <option value="2plazos">Opción B — 2 plazos de 475€ (total 950€)</option>
+        <option value="1pago">Opción C — 1 pago único de 940€</option>
+        <option value="mensual">Opción D — Pago mensual (importe variable)</option>
+      </select>
+    </div>
+    <div id="cm-preview" style="font-size:13px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:4px"></div>
+    <div class="login-error" id="cm-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('cambiar-modalidad')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarCambioModalidad()">Cambiar modalidad</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-asignar-modalidad">
   <div class="modal" style="width:min(580px,94vw)">
     <h3>Asignar modalidad de pago</h3>
@@ -1436,7 +1462,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-26';
+const BUILD_ID = '2026-06-19-27';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2979,6 +3005,95 @@ const MODALIDADES = {
   }
 };
 
+function abrirCambiarModalidad() {
+  const sel = document.getElementById('cm-atleta');
+  // Solo atletas que ya tienen plazos asignados
+  const atletasConPlazos = atletas.filter(a =>
+    a.estado === 'activo' && pagos.some(p => p.atletaId === a.id && p.temporada === '26-27')
+  ).sort((a,b) => a.nombre.localeCompare(b.nombre));
+  if (atletasConPlazos.length === 0) {
+    alert('No hay atletas con modalidad de pago asignada todavía.');
+    return;
+  }
+  sel.innerHTML = atletasConPlazos.map(a => `<option value="${a.id}">${esc(a.nombre)}</option>`).join('');
+  document.getElementById('cm-error').textContent = '';
+  cmMostrarActual();
+  cmPreview();
+  openModal('cambiar-modalidad');
+}
+
+function cmMostrarActual() {
+  const atletaId = parseInt(document.getElementById('cm-atleta')?.value);
+  const div = document.getElementById('cm-actual'); if (!div) return;
+  if (!atletaId) { div.style.display = 'none'; return; }
+  const plazosAtleta = pagos.filter(p => p.atletaId === atletaId && p.temporada === '26-27');
+  if (plazosAtleta.length === 0) { div.style.display = 'none'; return; }
+  const mod = plazosAtleta[0].modalidad;
+  const modLabel = MODALIDADES[mod]?.label || mod;
+  const pagados = plazosAtleta.filter(p => p.estado === 'pagado');
+  const pendientes = plazosAtleta.filter(p => p.estado !== 'pagado');
+  div.style.display = '';
+  div.innerHTML = `<strong>Modalidad actual:</strong> ${esc(modLabel)}<br>
+    <span style="color:var(--ok)">✓ ${pagados.length} plazo(s) pagado(s) — se conservarán</span><br>
+    ${pendientes.length > 0 ? `<span style="color:var(--red)">✕ ${pendientes.length} plazo(s) pendiente(s)/vencido(s) — se eliminarán</span>` : '<span style="color:var(--text-muted)">Sin plazos pendientes</span>'}`;
+  // Pre-seleccionar la modalidad actual como punto de partida
+  const selMod = document.getElementById('cm-modalidad');
+  if (selMod && MODALIDADES[mod]) selMod.value = mod;
+  cmPreview();
+}
+
+function cmPreview() {
+  const mod = document.getElementById('cm-modalidad')?.value;
+  const prev = document.getElementById('cm-preview'); if (!prev) return;
+  if (mod === 'mensual') {
+    prev.innerHTML = `<div style="font-size:12px;color:var(--text-muted)">Los nuevos pagos mensuales se añadirán mes a mes desde la sección de Pagos.</div>`;
+    return;
+  }
+  const m = MODALIDADES[mod]; if (!m) return;
+  prev.innerHTML = m.plazos.map(p =>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span>${p.label}</span>
+      <span><strong>${p.importe}€</strong> · ${fmtFPag(p.fechaInicio||p.fechaLimite)} – ${fmtFPag(p.fechaLimite)}</span>
+    </div>`
+  ).join('') + `<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Total nuevos plazos: <strong>${m.plazos.reduce((s,p)=>s+p.importe,0)}€</strong></div>`;
+}
+
+function confirmarCambioModalidad() {
+  const atletaId = parseInt(document.getElementById('cm-atleta').value);
+  const mod = document.getElementById('cm-modalidad').value;
+  const err = document.getElementById('cm-error');
+  if (!atletaId) { err.textContent = 'Selecciona un atleta.'; return; }
+  const a = atletas.find(x => x.id === atletaId);
+  const pendientes = pagos.filter(p => p.atletaId === atletaId && p.temporada === '26-27' && p.estado !== 'pagado');
+  if (!confirm(`Se eliminarán ${pendientes.length} plazo(s) pendiente(s) de ${a?.nombre} y se crearán los nuevos de "${MODALIDADES[mod]?.label || mod}". ¿Continuar?`)) return;
+  // Eliminar solo los pendientes/vencidos, conservar los pagados
+  pagos = pagos.filter(p => !(p.atletaId === atletaId && p.temporada === '26-27' && p.estado !== 'pagado'));
+  // Crear nuevos plazos (solo si no es mensual)
+  if (mod !== 'mensual') {
+    const m = MODALIDADES[mod];
+    m.plazos.forEach(plazo => {
+      // No duplicar si ya está pagado ese plazo
+      const yaExiste = pagos.some(p => p.atletaId === atletaId && p.temporada === '26-27' && p.plazo === plazo.num && p.modalidad === mod);
+      if (!yaExiste) {
+        pagos.push({ id: nextIdPagos++, atletaId, temporada: '26-27', modalidad: mod, plazo: plazo.num, label: plazo.label, importe: plazo.importe, fechaInicio: plazo.fechaInicio || plazo.fechaLimite, fechaLimite: plazo.fechaLimite, estado: 'pendiente', fecha: null, notas: '' });
+      }
+    });
+  }
+  save();
+  closeModal('cambiar-modalidad');
+  renderPgPagos();
+  renderPgResumen();
+}
+
+function abrirCambiarModalidadUno(atletaId) {
+  // Acceso rápido desde la tabla de pagos
+  abrirCambiarModalidad();
+  setTimeout(() => {
+    const sel = document.getElementById('cm-atleta');
+    if (sel) { sel.value = atletaId; cmMostrarActual(); }
+  }, 50);
+}
+
 function amFiltrarAtletas() {
   const q = (document.getElementById('am-buscar')?.value||'').toLowerCase();
   const lista = atletas.filter(a => a.estado==='activo').sort((a,b)=>a.nombre.localeCompare(b.nombre));
@@ -3147,7 +3262,7 @@ function renderPgPagos() {
         <td>${badgePP(p.estado)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(p.fecha)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${esc(p.notas||'')}</td>
-        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditPagoPag(${p.id})">✏</button></td>
+        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditPagoPag(${p.id})">✏</button> <button class="btn btn-sm" onclick="abrirCambiarModalidadUno(${p.atletaId})" title="Cambiar modalidad">↺</button></td>
       </tr>`;
     }).join('');
   renderPgPaginador('pg-pag-pagos', pagPagosPag, pages, p => { pagPagosPag=p; renderPgPagos(); }, total);
