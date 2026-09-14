@@ -616,7 +616,7 @@ tr:last-child td { border-bottom: none; }
       <!-- ATLETAS (solo admin) -->
       <div id="atletas-tab" class="section">
         <div class="page-title">Atletas</div>
-        <div class="page-sub">Listado completo de atletas: datos de contacto, categoría, cuota y gestión de altas y bajas.</div>
+        <div class="page-sub">Listado completo de atletas: datos de contacto, categoría, modalidad de pago y gestión de altas y bajas.</div>
 
         <div class="card">
           <div class="toolbar">
@@ -647,7 +647,7 @@ tr:last-child td { border-bottom: none; }
           </div>
           <div class="table-wrap">
             <table class="responsive-cards">
-              <thead><tr><th>Atleta</th><th>Categoría</th><th>Contacto</th><th>Estado</th><th>Cuota</th><th>Deuda</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Atleta</th><th>Categoría</th><th>Contacto</th><th>Estado</th><th>Modalidad de pago</th><th>Deuda</th><th>Acciones</th></tr></thead>
               <tbody id="body-admin-atletas"></tbody>
             </table>
           </div>
@@ -1462,7 +1462,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-27';
+const BUILD_ID = '2026-06-19-28';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2326,7 +2326,7 @@ function renderAdminAtletas() {
       <td data-label="Categoría">${a.categoria ? esc(a.categoria) : '<span style="color:var(--text-muted);font-size:12px">Sin categoría</span>'}</td>
       <td data-label="Contacto" style="font-size:12px"><div>${esc(a.email||'—')}</div><div style="color:var(--text-muted)">${esc(a.tel||'')}</div></td>
       <td data-label="Estado">${a.estado === 'activo' ? '<span class="badge badge-ok">Activo</span>' : '<span class="badge badge-gray">De baja</span>'}</td>
-      <td data-label="Cuota">${a.paga===false ? '<span style="color:var(--text-muted);font-size:12px">Exento</span>' : (a.cuota||45)+'€/mes'}</td>
+      <td data-label="Modalidad de pago">${(() => { const modAtleta = pagos.find(p=>p.atletaId===a.id&&p.temporada==='26-27'); if (!modAtleta) return '<span style="color:var(--text-muted);font-size:12px">Sin asignar</span>'; const mods={'3plazos':'Opción A (3 plazos)','2plazos':'Opción B (2 plazos)','1pago':'Opción C (único)','mensual':'Opción D (mensual)'}; return `<span style="font-size:12px">${mods[modAtleta.modalidad]||modAtleta.modalidad}</span>`; })()}</td>
       <td data-label="Deuda">${d>0?`<span style="color:var(--red);font-weight:600">${d}€</span>`:'<span style="color:var(--ok)">—</span>'}</td>
       <td data-label="Acciones" style="white-space:nowrap">
         <button class="btn btn-sm btn-icon" onclick="editarAtleta(${a.id})" title="Editar">✏️</button>
@@ -2369,7 +2369,9 @@ function verFichaAtleta(id) {
   document.getElementById('fa-estado-badge').textContent = a.estado==='activo'?'Activo':'Baja';
   document.getElementById('fa-estado-badge').className = 'badge ' + (a.estado==='activo'?'badge-ok':'badge-gray');
   document.getElementById('fa-categoria-badge').textContent = a.categoria || 'Sin categoría';
-  document.getElementById('fa-cuota-badge').textContent = a.paga===false ? 'Exento' : (a.cuota||45)+'€/mes';
+  const modAtletaFicha = pagos.find(p=>p.atletaId===id&&p.temporada==='26-27');
+  const modsLabels={'3plazos':'Opción A — 3 plazos','2plazos':'Opción B — 2 plazos','1pago':'Opción C — Pago único','mensual':'Opción D — Mensual'};
+  document.getElementById('fa-cuota-badge').textContent = modAtletaFicha ? (modsLabels[modAtletaFicha.modalidad]||modAtletaFicha.modalidad) : 'Sin modalidad asignada';
   document.getElementById('fa-dni').textContent = a.dni || '—';
   document.getElementById('fa-fnac').textContent = a.fechaNacimiento || (a.anioNacimiento ? a.anioNacimiento : '—');
   document.getElementById('fa-municipio').textContent = a.municipio || '—';
@@ -3610,20 +3612,18 @@ function atletasFiltradosActuales() {
 
 function exportarAtletasCSV() {
   const lista = atletasFiltradosActuales();
-  const cabecera = ['Nombre','Categoría','Estado','Fecha nacimiento','DNI/NIE','Email','Teléfono','Municipio','Tutor legal','Cuota (€/mes)','Notas'];
-  const filas = lista.map(a => [
-    a.nombre,
-    a.categoria || '',
-    a.estado === 'activo' ? 'Activo' : 'De baja',
-    a.fechaNacimiento || (a.anioNacimiento || ''),
-    a.dni || '',
-    a.email || '',
-    a.tel || '',
-    a.municipio || '',
-    a.tutor || '',
-    a.paga === false ? 'Exento' : (a.cuota || 45),
-    a.notas || ''
-  ]);
+  const cabecera = ['Nombre','Categoría','Estado','Fecha nacimiento','DNI/NIE','Email','Teléfono','Municipio','Tutor legal','Modalidad de pago','Notas'];
+  const modsCSV = {'3plazos':'Opción A (3 plazos)','2plazos':'Opción B (2 plazos)','1pago':'Opción C (único)','mensual':'Opción D (mensual)'};
+  const filas = lista.map(a => {
+    const modAtl = pagos.find(p=>p.atletaId===a.id&&p.temporada==='26-27');
+    return [
+      a.nombre, a.categoria || '', a.estado === 'activo' ? 'Activo' : 'De baja',
+      a.fechaNacimiento || (a.anioNacimiento || ''),
+      a.dni || '', a.email || '', a.tel || '', a.municipio || '', a.tutor || '',
+      modAtl ? (modsCSV[modAtl.modalidad]||modAtl.modalidad) : 'Sin asignar',
+      a.notas || ''
+    ];
+  });
   const csvContent = [cabecera, ...filas]
     .map(fila => fila.map(celda => `"${String(celda).replace(/"/g, '""')}"`).join(','))
     .join('\n');
