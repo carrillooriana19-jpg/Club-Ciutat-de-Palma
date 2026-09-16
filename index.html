@@ -876,8 +876,13 @@ tr:last-child td { border-bottom: none; }
               <button class="btn btn-sm" onclick="abrirCambiarModalidad()">↺ Cambiar modalidad</button>
               <button class="btn btn-sm" onclick="generarPlazosTemporada()">Generar plazos pendientes</button>
               <button class="btn btn-sm" onclick="openModal('add-pago-mensual')">+ Añadir pago mensual</button>
+              <button class="btn btn-sm" onclick="openModal('add-abono-flexible')">+ Añadir abono flexible</button>
             </div>
           </div>
+
+          <!-- Panel de seguimiento de atletas con pago flexible -->
+          <div id="pg-flexible-panel"></div>
+
           <div class="card">
             <div class="toolbar">
               <div class="toolbar-left">
@@ -891,6 +896,7 @@ tr:last-child td { border-bottom: none; }
                   <option value="2plazos">Opción B — 2 plazos</option>
                   <option value="1pago">Opción C — Pago único</option>
                   <option value="mensual">Opción D — Mensual</option>
+                  <option value="flexible">Opción E — Pago flexible (abonos)</option>
                 </select>
                 <select id="pg-filter-pago-estado" onchange="pagPagosPag=1;renderPgPagos()">
                   <option value="">Todos los estados</option>
@@ -1272,6 +1278,7 @@ tr:last-child td { border-bottom: none; }
         <option value="2plazos">Opción B — 2 plazos de 475€ (total 950€)</option>
         <option value="1pago">Opción C — 1 pago único de 940€</option>
         <option value="mensual">Opción D — Pago mensual (importe variable)</option>
+        <option value="flexible">Opción E — Pago flexible (abonos)</option>
       </select>
     </div>
     <div id="cm-preview" style="font-size:13px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:4px"></div>
@@ -1279,6 +1286,35 @@ tr:last-child td { border-bottom: none; }
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('cambiar-modalidad')">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarCambioModalidad()">Cambiar modalidad</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: asignar deuda flexible -->
+<!-- MODAL: añadir abono a pago flexible -->
+<div class="modal-overlay" id="modal-add-abono-flexible">
+  <div class="modal" style="width:min(480px,94vw)">
+    <h3>Añadir abono</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Registra un pago parcial para un atleta con pago flexible.</p>
+    <div class="field"><label>Atleta *</label>
+      <select id="af-atleta" onchange="afMostrarSaldo()"></select>
+    </div>
+    <div id="af-saldo" style="font-size:13px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;display:none"></div>
+    <div class="field-row">
+      <div class="field"><label>Importe del abono (€) *</label>
+        <input type="number" id="af-importe" min="1" placeholder="Ej. 100" oninput="afMostrarSaldo()">
+      </div>
+      <div class="field"><label>Fecha</label>
+        <input type="date" id="af-fecha">
+      </div>
+    </div>
+    <div class="field"><label>Notas</label>
+      <input id="af-notas" placeholder="Transferencia, efectivo...">
+    </div>
+    <div class="login-error" id="af-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('add-abono-flexible')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarAbonoFlexible()">Guardar abono</button>
     </div>
   </div>
 </div>
@@ -1294,9 +1330,16 @@ tr:last-child td { border-bottom: none; }
         <option value="2plazos">Opción B — 2 plazos de 475€ (total 950€)</option>
         <option value="1pago">Opción C — 1 pago único de 940€</option>
         <option value="mensual">Opción D — Pago mensual (importe variable)</option>
+        <option value="flexible">Opción E — Pago flexible (abonos)</option>
       </select>
     </div>
     <div id="am-preview" style="font-size:13px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px"></div>
+    <div id="am-flexible-wrap" style="display:none">
+      <div class="field"><label>Total a pagar (€) *</label>
+        <input type="number" id="am-flexible-total" min="1" placeholder="Ej. 960" value="960">
+      </div>
+      <p style="font-size:12px;color:var(--text-muted)">Se creará una deuda por este importe. Después podrás ir añadiendo abonos parciales hasta completarlo.</p>
+    </div>
     <div class="field">
       <label>Atletas *</label>
       <div style="display:flex;gap:8px;margin-bottom:6px">
@@ -1462,7 +1505,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-28';
+const BUILD_ID = '2026-06-19-29';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1971,6 +2014,20 @@ function openModal(id) {
     document.getElementById('apm-rango-est').value = 'pendiente';
     document.getElementById('apm-rango-preview').textContent = '';
   }
+  if (id === 'add-abono-flexible') {
+    const sel = document.getElementById('af-atleta');
+    if (sel) {
+      const atletasFlexibles = atletas.filter(a => a.estado==='activo' && pagos.some(p=>p.atletaId===a.id&&p.modalidad==='flexible'&&p.tipo==='deuda'));
+      sel.innerHTML = atletasFlexibles.length === 0
+        ? '<option value="">Sin atletas con pago flexible asignado</option>'
+        : atletasFlexibles.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(a=>`<option value="${a.id}">${esc(a.nombre)}</option>`).join('');
+    }
+    document.getElementById('af-importe').value = '';
+    document.getElementById('af-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('af-notas').value = '';
+    document.getElementById('af-error').textContent = '';
+    afMostrarSaldo();
+  }
   if (id === 'asignar-modalidad') {
     document.getElementById('am-buscar').value = '';
     const err = document.getElementById('am-error'); if(err) err.textContent='';
@@ -2326,7 +2383,7 @@ function renderAdminAtletas() {
       <td data-label="Categoría">${a.categoria ? esc(a.categoria) : '<span style="color:var(--text-muted);font-size:12px">Sin categoría</span>'}</td>
       <td data-label="Contacto" style="font-size:12px"><div>${esc(a.email||'—')}</div><div style="color:var(--text-muted)">${esc(a.tel||'')}</div></td>
       <td data-label="Estado">${a.estado === 'activo' ? '<span class="badge badge-ok">Activo</span>' : '<span class="badge badge-gray">De baja</span>'}</td>
-      <td data-label="Modalidad de pago">${(() => { const modAtleta = pagos.find(p=>p.atletaId===a.id&&p.temporada==='26-27'); if (!modAtleta) return '<span style="color:var(--text-muted);font-size:12px">Sin asignar</span>'; const mods={'3plazos':'Opción A (3 plazos)','2plazos':'Opción B (2 plazos)','1pago':'Opción C (único)','mensual':'Opción D (mensual)'}; return `<span style="font-size:12px">${mods[modAtleta.modalidad]||modAtleta.modalidad}</span>`; })()}</td>
+      <td data-label="Modalidad de pago">${(() => { const modAtleta = pagos.find(p=>p.atletaId===a.id&&p.temporada==='26-27'); if (!modAtleta) return '<span style="color:var(--text-muted);font-size:12px">Sin asignar</span>'; const mods={'3plazos':'Opción A (3 plazos)','2plazos':'Opción B (2 plazos)','1pago':'Opción C (único)','mensual':'Opción D (mensual)','flexible':'Opción E (flexible)'}; return `<span style="font-size:12px">${mods[modAtleta.modalidad]||modAtleta.modalidad}</span>`; })()}</td>
       <td data-label="Deuda">${d>0?`<span style="color:var(--red);font-weight:600">${d}€</span>`:'<span style="color:var(--ok)">—</span>'}</td>
       <td data-label="Acciones" style="white-space:nowrap">
         <button class="btn btn-sm btn-icon" onclick="editarAtleta(${a.id})" title="Editar">✏️</button>
@@ -2370,7 +2427,7 @@ function verFichaAtleta(id) {
   document.getElementById('fa-estado-badge').className = 'badge ' + (a.estado==='activo'?'badge-ok':'badge-gray');
   document.getElementById('fa-categoria-badge').textContent = a.categoria || 'Sin categoría';
   const modAtletaFicha = pagos.find(p=>p.atletaId===id&&p.temporada==='26-27');
-  const modsLabels={'3plazos':'Opción A — 3 plazos','2plazos':'Opción B — 2 plazos','1pago':'Opción C — Pago único','mensual':'Opción D — Mensual'};
+  const modsLabels={'3plazos':'Opción A — 3 plazos','2plazos':'Opción B — 2 plazos','1pago':'Opción C — Pago único','mensual':'Opción D — Mensual','flexible':'Opción E — Flexible'};
   document.getElementById('fa-cuota-badge').textContent = modAtletaFicha ? (modsLabels[modAtletaFicha.modalidad]||modAtletaFicha.modalidad) : 'Sin modalidad asignada';
   document.getElementById('fa-dni').textContent = a.dni || '—';
   document.getElementById('fa-fnac').textContent = a.fechaNacimiento || (a.anioNacimiento ? a.anioNacimiento : '—');
@@ -2865,7 +2922,7 @@ function showPagosSubTab(id, btn) {
   document.getElementById(id).classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'pg-resumen') renderPgResumen();
-  else if (id === 'pg-pagos') { renderPgPagos(); }
+  else if (id === 'pg-pagos') { renderPgPagos(); renderFlexiblePanel(); }
   else if (id === 'pg-cargos') { renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
   else if (id === 'pg-uniforme') renderUniformidad();
@@ -2876,7 +2933,7 @@ function refrescarVistasPagos() {
   if (!activo) { updatePagosNavBadge(); return; }
   const id = activo.id;
   if (id === 'pg-resumen') renderPgResumen();
-  else if (id === 'pg-pagos') { renderPgPagos(); }
+  else if (id === 'pg-pagos') { renderPgPagos(); renderFlexiblePanel(); }
   else if (id === 'pg-cargos') { renderPgCargos(); }
   else if (id === 'pg-alertas') renderPgAlertas();
   else if (id === 'pg-uniforme') renderUniformidad();
@@ -2953,8 +3010,8 @@ function renderPgResumen() {
 
   // Gráfico de pagos por modalidad
   const gr = document.getElementById('pg-resumen-grafico'); if (!gr) return;
-  const mods = ['3plazos','2plazos','1pago','mensual'];
-  const modLabels = { '3plazos':'3 plazos','2plazos':'2 plazos','1pago':'Único','mensual':'Mensual' };
+  const mods = ['3plazos','2plazos','1pago','mensual','flexible'];
+  const modLabels = { '3plazos':'3 plazos','2plazos':'2 plazos','1pago':'Único','mensual':'Mensual','flexible':'Flexible (abonos)' };
   const modColors = { '3plazos':'var(--navy)','2plazos':'var(--gold)','1pago':'var(--ok)','mensual':'#6b7280' };
   const atletasAsignados = mods.map(mod => ({
     mod,
@@ -3004,8 +3061,129 @@ const MODALIDADES = {
   'mensual': {
     label: 'Opción D — Pago mensual',
     plazos: []
+  },
+  'flexible': {
+    label: 'Opción E — Pago flexible (abonos)',
+    plazos: []
   }
 };
+
+// --- Pago flexible (Opción E) ---
+function renderFlexiblePanel() {
+  const panel = document.getElementById('pg-flexible-panel'); if (!panel) return;
+  const atletasFlexibles = [...new Set(
+    pagos.filter(p => p.modalidad === 'flexible' && p.tipo === 'deuda').map(p => p.atletaId)
+  )];
+  if (atletasFlexibles.length === 0) { panel.innerHTML = ''; return; }
+
+  panel.innerHTML = `<div class="card" style="margin-bottom:14px">
+    <strong style="font-size:14px;color:var(--navy)">Seguimiento de pagos flexibles</strong>
+    <div style="margin-top:10px">
+    ${atletasFlexibles.map(aid => {
+      const a = atletas.find(x=>x.id===aid);
+      const deuda = pagos.find(p=>p.atletaId===aid&&p.modalidad==='flexible'&&p.tipo==='deuda');
+      const abonos = pagos.filter(p=>p.atletaId===aid&&p.modalidad==='flexible'&&p.tipo==='abono');
+      const totalAbonado = abonos.reduce((s,p)=>s+p.importe,0);
+      const totalDeuda = deuda?.importe || 0;
+      const restante = totalDeuda - totalAbonado;
+      const pct = totalDeuda > 0 ? Math.min(100, Math.round(totalAbonado/totalDeuda*100)) : 0;
+      const completo = restante <= 0;
+      return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+          <div>
+            <span style="font-weight:600;font-size:14px">${esc(a?a.nombre:'—')}</span>
+            <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Total: ${totalDeuda}€</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            ${completo
+              ? '<span style="color:var(--ok);font-weight:600;font-size:13px">✓ Pagado completo</span>'
+              : `<span style="color:var(--red);font-weight:600;font-size:14px">Pendiente: ${restante}€</span>`}
+            <button class="btn btn-sm btn-primary" onclick="abrirAbonoFlexible(${aid})">+ Abono</button>
+          </div>
+        </div>
+        <div style="height:10px;background:var(--bg);border-radius:6px;overflow:hidden;margin-bottom:4px">
+          <div style="height:100%;width:${pct}%;background:${completo?'var(--ok)':'var(--navy)'};border-radius:6px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">${pct}% abonado · ${totalAbonado}€ de ${totalDeuda}€
+          ${abonos.length > 0 ? ` · ${abonos.length} abono${abonos.length!==1?'s':''}` : ''}</div>
+        ${abonos.length > 0 ? `<div style="margin-top:6px">${abonos.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(ab=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0;border-top:1px solid var(--border)">
+            <span style="color:var(--text-muted)">${fmtFPag(ab.fecha)||'—'} ${ab.notas?'· '+esc(ab.notas):''}</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <strong style="color:var(--ok)">+${ab.importe}€</strong>
+              <button class="btn btn-sm btn-danger" onclick="eliminarAbonoFlexible(${ab.id})" style="padding:2px 6px;font-size:11px">✕</button>
+            </div>
+          </div>`).join('')}</div>` : ''}
+      </div>`;
+    }).join('')}
+    </div>
+  </div>`;
+}
+
+function abrirAbonoFlexible(atletaId) {
+  const sel = document.getElementById('af-atleta'); if (!sel) return;
+  sel.value = atletaId;
+  afMostrarSaldo();
+  openModal('add-abono-flexible');
+}
+
+function afMostrarSaldo() {
+  const atletaId = parseInt(document.getElementById('af-atleta')?.value);
+  const div = document.getElementById('af-saldo'); if (!div) return;
+  if (!atletaId) { div.style.display = 'none'; return; }
+  const deuda = pagos.find(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='deuda');
+  if (!deuda) { div.style.display = 'none'; return; }
+  const abonos = pagos.filter(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='abono');
+  const totalAbonado = abonos.reduce((s,p)=>s+p.importe,0);
+  const restante = deuda.importe - totalAbonado;
+  const imp = parseFloat(document.getElementById('af-importe')?.value||0)||0;
+  const trasAbono = restante - imp;
+  div.style.display = '';
+  div.innerHTML = `Abonado: <strong>${totalAbonado}€</strong> · Pendiente: <strong style="color:${restante>0?'var(--red)':'var(--ok)'}">${restante}€</strong>
+    ${imp > 0 ? `<br><span style="color:var(--text-muted);font-size:12px">Tras este abono quedarían: <strong>${Math.max(0,trasAbono)}€</strong></span>` : ''}`;
+}
+
+function guardarAbonoFlexible() {
+  const atletaId = parseInt(document.getElementById('af-atleta').value);
+  const imp = parseFloat(document.getElementById('af-importe').value);
+  const err = document.getElementById('af-error');
+  if (!atletaId) { err.textContent = 'Selecciona un atleta.'; return; }
+  if (!imp || imp <= 0) { err.textContent = 'Introduce un importe válido.'; return; }
+  const deuda = pagos.find(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='deuda');
+  if (!deuda) { err.textContent = 'Este atleta no tiene pago flexible asignado.'; return; }
+  err.textContent = '';
+  const fechaVal = document.getElementById('af-fecha').value || new Date().toISOString().split('T')[0];
+  const abonos = pagos.filter(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='abono');
+  const totalAbonado = abonos.reduce((s,p)=>s+p.importe,0) + imp;
+  pagos.push({
+    id: nextIdPagos++, atletaId, temporada: '26-27', modalidad: 'flexible',
+    tipo: 'abono', label: `Abono ${abonos.length+1}`, importe: imp,
+    estado: 'pagado', fecha: fechaVal, notas: document.getElementById('af-notas').value.trim()
+  });
+  // Si la deuda queda saldada, marcar el registro de deuda como pagado
+  if (totalAbonado >= deuda.importe) deuda.estado = 'pagado';
+  save();
+  closeModal('add-abono-flexible');
+  renderFlexiblePanel();
+  renderPgPagos();
+  renderPgResumen();
+}
+
+function eliminarAbonoFlexible(id) {
+  if (!confirm('¿Eliminar este abono?')) return;
+  const abono = pagos.find(p=>p.id===id); if (!abono) return;
+  const atletaId = abono.atletaId;
+  pagos = pagos.filter(p=>p.id!==id);
+  // Revisar si la deuda sigue saldada
+  const deuda = pagos.find(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='deuda');
+  if (deuda) {
+    const totalAbonado = pagos.filter(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='abono').reduce((s,p)=>s+p.importe,0);
+    if (totalAbonado < deuda.importe) deuda.estado = 'pendiente';
+  }
+  save();
+  renderFlexiblePanel();
+  renderPgPagos();
+}
 
 function abrirCambiarModalidad() {
   const sel = document.getElementById('cm-atleta');
@@ -3128,8 +3306,14 @@ function amActualizarConteo() {
 function amPreview() {
   const mod = document.getElementById('am-modalidad')?.value;
   const prev = document.getElementById('am-preview'); if (!prev) return;
+  const flexWrap = document.getElementById('am-flexible-wrap');
+  if (flexWrap) flexWrap.style.display = mod === 'flexible' ? '' : 'none';
   if (mod === 'mensual') {
     prev.innerHTML = `<div style="font-size:12px;color:var(--text-muted)">Los pagos se añadirán mes a mes desde la sección de Pagos, con el importe que corresponda a cada atleta cada mes. Puedes añadir varios meses de golpe o uno a uno.</div>`;
+    return;
+  }
+  if (mod === 'flexible') {
+    prev.innerHTML = `<div style="font-size:12px;color:var(--text-muted)">Se registrará una deuda total y podrás ir anotando los abonos parciales que vaya haciendo la familia hasta completar el pago.</div>`;
     return;
   }
   const m = MODALIDADES[mod]; if (!m) return;
@@ -3146,6 +3330,27 @@ function asignarModalidad() {
   const err = document.getElementById('am-error');
   const seleccionados = [...document.querySelectorAll('#am-lista-atletas input[type=checkbox]:checked')].map(cb => parseInt(cb.value));
   if (seleccionados.length === 0) { err.textContent = 'Selecciona al menos un atleta.'; return; }
+
+  if (mod === 'flexible') {
+    const total = parseFloat(document.getElementById('am-flexible-total')?.value);
+    if (!total || total <= 0) { err.textContent = 'Indica el total a pagar.'; return; }
+    err.textContent = '';
+    seleccionados.forEach(atletaId => {
+      pagos = pagos.filter(p => !(p.atletaId === atletaId && p.temporada === '26-27' && p.estado !== 'pagado'));
+      // Crear registro de deuda total
+      pagos.push({
+        id: nextIdPagos++, atletaId, temporada: '26-27', modalidad: 'flexible',
+        tipo: 'deuda', label: 'Deuda total', importe: total,
+        estado: 'pendiente', fecha: null, notas: ''
+      });
+    });
+    save();
+    closeModal('asignar-modalidad');
+    renderPgPagos();
+    renderFlexiblePanel();
+    return;
+  }
+
   err.textContent = '';
   const m = MODALIDADES[mod]; if (!m) return;
   seleccionados.forEach(atletaId => {
@@ -3222,6 +3427,8 @@ function renderPgPagos() {
   if (cambioVencido) save();
 
   let lista = pagos.filter(p => {
+    // Los registros de flexible solo se muestran en el panel propio (a menos que se filtre explícitamente por esa modalidad)
+    if (p.modalidad === 'flexible' && fm !== 'flexible') return false;
     if (fm && p.modalidad !== fm) return false;
     if (fe && p.estado !== fe) return false;
     // Filtro por mes: el plazo aparece en cualquier mes dentro de su rango
@@ -3613,7 +3820,7 @@ function atletasFiltradosActuales() {
 function exportarAtletasCSV() {
   const lista = atletasFiltradosActuales();
   const cabecera = ['Nombre','Categoría','Estado','Fecha nacimiento','DNI/NIE','Email','Teléfono','Municipio','Tutor legal','Modalidad de pago','Notas'];
-  const modsCSV = {'3plazos':'Opción A (3 plazos)','2plazos':'Opción B (2 plazos)','1pago':'Opción C (único)','mensual':'Opción D (mensual)'};
+  const modsCSV = {'3plazos':'Opción A (3 plazos)','2plazos':'Opción B (2 plazos)','1pago':'Opción C (único)','mensual':'Opción D (mensual)','flexible':'Opción E (flexible)'};
   const filas = lista.map(a => {
     const modAtl = pagos.find(p=>p.atletaId===a.id&&p.temporada==='26-27');
     return [
