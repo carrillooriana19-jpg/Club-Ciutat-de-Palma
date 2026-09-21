@@ -202,7 +202,9 @@ body {
 }
 .page-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 26px; }
 .section { display: none; }
-/* Sub-navegación de la sección Pagos */
+/* Checkboxes y labels siempre alineados */
+label:has(input[type="checkbox"]) { display:flex; align-items:center; gap:8px; cursor:pointer; }
+input[type="checkbox"] { width:15px; height:15px; flex-shrink:0; cursor:pointer; accent-color:var(--navy); }
 .pg-subnav { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:18px; border-bottom:2px solid var(--border); padding-bottom:8px; }
 .pg-subnav-item { padding:6px 14px; border-radius:var(--radius-sm) var(--radius-sm) 0 0; border:1px solid var(--border); background:var(--card); color:var(--text-muted); font-size:13px; cursor:pointer; }
 .pg-subnav-item.active { background:var(--navy); color:#fff; border-color:var(--navy); }
@@ -1190,21 +1192,16 @@ tr:last-child td { border-bottom: none; }
     </div>
     <div class="field-row">
       <div class="field"><label>DNI / NIE</label><input id="na-dni" placeholder="Opcional"></div>
-      <div class="field"><label>Cuota mensual (€)</label><input id="na-cuota" type="number" min="0" value="45"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Email</label><input id="na-email" type="email" placeholder="Opcional"></div>
       <div class="field"><label>Teléfono</label><input id="na-tel" placeholder="Opcional"></div>
     </div>
     <div class="field-row">
+      <div class="field"><label>Email</label><input id="na-email" type="email" placeholder="Opcional"></div>
       <div class="field"><label>Municipio de empadronamiento</label><input id="na-municipio" placeholder="Opcional"></div>
-      <div class="field"><label>Tutor legal (si menor de edad)</label><input id="na-tutor" placeholder="Opcional"></div>
     </div>
+    <div class="field"><label>Tutor legal (si menor de edad)</label><input id="na-tutor" placeholder="Opcional"></div>
     <div class="field"><label>Notas</label><textarea id="na-notas" placeholder="Notas adicionales..."></textarea></div>
-    <div class="field" style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" id="na-paga" checked>
-      <label for="na-paga">Paga cuota mensual</label>
-    </div>
+    <input type="hidden" id="na-cuota" value="45">
+    <input type="hidden" id="na-paga" value="true">
     <input type="hidden" id="na-id">
     <div class="login-error" id="na-error"></div>
     <div class="modal-actions">
@@ -1505,7 +1502,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-06-19-29';
+const BUILD_ID = '2026-09-18-01';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -1941,7 +1938,7 @@ function openModal(id) {
     document.getElementById('na-municipio').value = '';
     document.getElementById('na-tutor').value = '';
     document.getElementById('na-notas').value = '';
-    document.getElementById('na-paga').checked = true;
+    // na-paga es hidden, paga = true por defecto
     const sel = document.getElementById('na-categoria');
     sel.innerHTML = '<option value="">Sin categoría</option>' +
       CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
@@ -2472,13 +2469,13 @@ function editarAtleta(id) {
   sel.innerHTML = '<option value="">Sin categoría</option>' + CATEGORIAS_FIJAS.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
   sel.value = a.categoria || '';
   document.getElementById('na-dni').value = a.dni || '';
-  document.getElementById('na-cuota').value = a.cuota || 45;
+  // cuota se gestiona desde pagos
   document.getElementById('na-email').value = a.email || '';
   document.getElementById('na-tel').value = a.tel || '';
   document.getElementById('na-municipio').value = a.municipio || '';
   document.getElementById('na-tutor').value = a.tutor || '';
   document.getElementById('na-notas').value = a.notas || '';
-  document.getElementById('na-paga').checked = a.paga !== false;
+  // paga legacy ignorado
   document.getElementById('na-error').textContent = '';
 }
 
@@ -2490,13 +2487,13 @@ function guardarAtleta() {
   const anioNacimiento = fnacIso ? parseInt(fnacIso.split('-')[0]) : null;
   const categoria = document.getElementById('na-categoria').value;
   const dni = document.getElementById('na-dni').value.trim();
-  const cuota = parseFloat(document.getElementById('na-cuota').value) || 45;
+  const cuota = a ? (a.cuota || 45) : 45;
   const email = document.getElementById('na-email').value.trim();
   const tel = document.getElementById('na-tel').value.trim();
   const municipio = document.getElementById('na-municipio').value.trim();
   const tutor = document.getElementById('na-tutor').value.trim();
   const notas = document.getElementById('na-notas').value.trim();
-  const paga = document.getElementById('na-paga').checked;
+  const paga = true;
   const err = document.getElementById('na-error');
   if (!nombre) { err.textContent = 'El nombre es obligatorio.'; return; }
   if (id) {
