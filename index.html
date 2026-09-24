@@ -693,6 +693,11 @@ tr:last-child td { border-bottom: none; }
               <select id="cal-filtro-cat" onchange="renderCalendario()">
                 <option value="">Todas las categorías</option>
               </select>
+              <select id="cal-filtro-ent" onchange="renderCalendario()">
+                <option value="">Todos (con o sin entrenador)</option>
+                <option value="sin">Sin entrenador todavía</option>
+                <option value="mios" id="cal-filtro-ent-mios" style="display:none">Donde yo asisto</option>
+              </select>
               <select id="cal-filtro-periodo" onchange="renderCalendario()">
                 <option value="">Todos los eventos</option>
                 <option value="semana">Esta semana</option>
@@ -748,10 +753,9 @@ tr:last-child td { border-bottom: none; }
 
             <div class="field-row">
               <div class="field"><label>Lugar</label><input id="cal-nuevo-lugar" placeholder="Piscina Son Hugo..."></div>
-              <div class="field"><label>Entrenador responsable</label>
-                <select id="cal-nuevo-entrenador">
-                  <option value="">Sin asignar</option>
-                </select>
+              <div class="field"><label>Entrenadores (opcional)</label>
+                <div id="cal-ent-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">Puedes dejarlo vacío: los entrenadores se apuntarán ellos mismos desde su cuenta.</div>
               </div>
             </div>
             <div class="field">
@@ -1031,8 +1035,8 @@ tr:last-child td { border-bottom: none; }
     </div>
     <div class="field-row">
       <div class="field"><label>Lugar</label><input id="ee-lugar" placeholder="Piscina Son Hugo..."></div>
-      <div class="field"><label>Entrenador responsable</label>
-        <select id="ee-entrenador"><option value="">Sin asignar</option></select>
+      <div class="field"><label>Entrenadores</label>
+        <div id="ee-ent-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
       </div>
     </div>
     <div class="field">
@@ -1502,7 +1506,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-09-24-02';
+const BUILD_ID = '2026-09-24-03';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2769,6 +2773,8 @@ async function iniciarSync(esPrimeraVez) {
         poblarSelectEquipos();
         if (document.getElementById('resumen').classList.contains('active')) renderResumenAsistencia();
         if (sesion.tipo === 'admin' && typeof refrescarVistasPagos === 'function') refrescarVistasPagos();
+        const calTab = document.getElementById('calendario-tab');
+        if (calTab && calTab.classList.contains('active')) renderCalendario(); else actualizarBadgeCalendario();
       }
     });
   } catch (e) {
@@ -3961,11 +3967,8 @@ function eeCerrarRivales() {
 
 function editarEvento(id) {
   const ev = eventos.find(x=>x.id===id); if (!ev) return;
-  // Poblar entrenadores
-  const selEnt = document.getElementById('ee-entrenador');
-  selEnt.innerHTML = '<option value="">Sin asignar</option>' +
-    entrenadores.filter(e=>e.activo!==false).sort((a,b)=>a.nombre.localeCompare(b.nombre))
-      .map(e=>`<option value="${esc(e.nombre)}">${esc(e.nombre)}</option>`).join('');
+  // Poblar entrenadores (chips multiselección)
+  calPoblarEntrenadoresChips('ee-ent-wrap', entrenadoresDe(ev));
   // Rellenar campos
   document.getElementById('ee-id').value = id;
   document.getElementById('ee-fecha').value = ev.fecha;
@@ -3975,7 +3978,6 @@ function editarEvento(id) {
   document.getElementById('ee-rival').value = ev.rival || '';
   document.getElementById('ee-titulo').value = ev.titulo || '';
   document.getElementById('ee-lugar').value = ev.lugar || '';
-  selEnt.value = ev.entrenador || '';
   document.getElementById('ee-cats-wrap') && calPoblarCategorias('ee-cats-wrap', ev.categorias || '');
   document.getElementById('ee-notas').value = ev.notas || '';
   eeCambiarTipo();
@@ -4007,7 +4009,8 @@ function guardarEdicionEvento() {
   ev.rival = rival;
   ev.localidad = localidad;
   ev.lugar = document.getElementById('ee-lugar').value.trim();
-  ev.entrenador = document.getElementById('ee-entrenador').value || '';
+  ev.entrenadores = calGetEntrenadoresChips('ee-ent-wrap');
+  delete ev.entrenador;
   ev.categorias = calGetCategorias('ee-cats-wrap');
   ev.notas = document.getElementById('ee-notas').value.trim();
   eventos.sort((a,b) => a.fecha.localeCompare(b.fecha));
@@ -4090,13 +4093,70 @@ function calGetCategorias(wrapId) {
   return checked.join(', ');
 }
 
+/* ---- Entrenadores asignados a un evento ---- */
+// Devuelve la lista de nombres de entrenadores de un evento (compatible con el
+// campo antiguo "entrenador", que guardaba un solo nombre).
+function entrenadoresDe(ev) {
+  if (Array.isArray(ev.entrenadores)) return ev.entrenadores;
+  return ev.entrenador ? [ev.entrenador] : [];
+}
+
+function calPoblarEntrenadoresChips(wrapId, seleccionados) {
+  const wrap = document.getElementById(wrapId); if (!wrap) return;
+  const sels = new Set(seleccionados || []);
+  // Incluye a quien ya estuviera apuntado aunque su cuenta se haya desactivado
+  const activos = entrenadores.filter(e => e.activo !== false).map(e => e.nombre);
+  const nombres = [...new Set([...activos, ...sels])].sort((a,b) => a.localeCompare(b));
+  if (nombres.length === 0) {
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">Todavía no hay entrenadores creados.</span>';
+    return;
+  }
+  wrap.innerHTML = nombres.map(n => {
+    const checked = sels.has(n);
+    return `<label style="display:flex;align-items:center;gap:4px;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:${checked?'var(--navy)':'var(--card)'};color:${checked?'#fff':'var(--text)'}">
+      <input type="checkbox" value="${esc(n)}" ${checked?'checked':''} onchange="calActualizarCatLabel('${wrapId}')" style="display:none">
+      ${esc(n)}
+    </label>`;
+  }).join('');
+}
+
+function calGetEntrenadoresChips(wrapId) {
+  const wrap = document.getElementById(wrapId); if (!wrap) return [];
+  return [...wrap.querySelectorAll('input:checked')].map(cb => cb.value);
+}
+
 function calPoblarEntrenadores() {
-  ['cal-nuevo-entrenador','ee-entrenador'].forEach(id => {
-    const sel = document.getElementById(id); if (!sel) return;
-    sel.innerHTML = '<option value="">Sin asignar</option>' +
-      entrenadores.filter(e=>e.activo!==false).sort((a,b)=>a.nombre.localeCompare(b.nombre))
-        .map(e=>`<option value="${esc(e.nombre)}">${esc(e.nombre)}</option>`).join('');
-  });
+  // Solo rellena el formulario de "Añadir evento" si está vacío, para no borrar
+  // lo que el admin esté marcando cuando llegan cambios en tiempo real.
+  const wrap = document.getElementById('cal-ent-wrap');
+  if (wrap && !wrap.querySelector('input')) calPoblarEntrenadoresChips('cal-ent-wrap', []);
+}
+
+// Un entrenador se apunta (o se quita) de un evento desde su propia cuenta.
+function calToggleMiNombre(id) {
+  if (!sesion || sesion.tipo !== 'entrenador') return;
+  const ev = eventos.find(x => x.id === id); if (!ev) return;
+  const hoyStr = todayStr();
+  if (ev.fecha < hoyStr) return;
+  const nombre = sesion.nombre;
+  const lista = entrenadoresDe(ev).slice();
+  const i = lista.indexOf(nombre);
+  if (i >= 0) lista.splice(i, 1); else lista.push(nombre);
+  ev.entrenadores = lista;
+  delete ev.entrenador;
+  save();
+  renderCalendario();
+}
+
+// El admin quita a un entrenador concreto de un evento.
+function calQuitarEntrenador(id, nombre) {
+  if (!sesion || sesion.tipo !== 'admin') return;
+  const ev = eventos.find(x => x.id === id); if (!ev) return;
+  if (!confirm(`¿Quitar a ${nombre} de este evento?`)) return;
+  ev.entrenadores = entrenadoresDe(ev).filter(n => n !== nombre);
+  delete ev.entrenador;
+  save();
+  renderCalendario();
 }
 
 function guardarEvento() {
@@ -4132,7 +4192,7 @@ function guardarEvento() {
     id: nuevoId, fecha,
     hora: document.getElementById('cal-nueva-hora').value || '',
     tipo, titulo, rival, localidad,
-    entrenador: document.getElementById('cal-nuevo-entrenador').value || '',
+    entrenadores: calGetEntrenadoresChips('cal-ent-wrap'),
     lugar: document.getElementById('cal-nuevo-lugar').value.trim(),
     categorias: calGetCategorias('cal-cats-wrap'),
     notas: document.getElementById('cal-nuevo-notas').value.trim()
@@ -4142,6 +4202,7 @@ function guardarEvento() {
   // Limpiar formulario
   ['cal-nueva-fecha','cal-nueva-hora','cal-nuevo-rival','cal-nuevo-titulo','cal-nuevo-lugar','cal-nuevo-notas'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   calPoblarCategorias('cal-cats-wrap', '');
+  calPoblarEntrenadoresChips('cal-ent-wrap', []);
   document.getElementById('cal-nuevo-tipo').value = 'partido';
   document.getElementById('cal-nueva-localidad').value = 'casa';
   calToggleTipoPartido();
@@ -4174,7 +4235,8 @@ function renderCalendario() {
 
   if (esAdmin) {
     calPoblarEntrenadores();
-    calPoblarCategorias('cal-cats-wrap', '');
+    const catsWrap = document.getElementById('cal-cats-wrap');
+    if (catsWrap && !catsWrap.querySelector('input')) calPoblarCategorias('cal-cats-wrap', '');
     calToggleTipoPartido();
   }
 
@@ -4219,8 +4281,17 @@ function renderCalendario() {
     hastaStr = ultimoSig.toISOString().split('T')[0];
   }
 
+  const selEntFiltro = document.getElementById('cal-filtro-ent');
+  const optMios = document.getElementById('cal-filtro-ent-mios');
+  const esEntr = sesion && sesion.tipo === 'entrenador';
+  if (optMios) optMios.style.display = esEntr ? '' : 'none';
+  if (!esEntr && selEntFiltro && selEntFiltro.value === 'mios') selEntFiltro.value = '';
+  const filtroEnt = selEntFiltro?.value || '';
+
   const filtrar = (ev) => {
     if (filtroTipo && ev.tipo !== filtroTipo) return false;
+    if (filtroEnt === 'sin' && entrenadoresDe(ev).length > 0) return false;
+    if (filtroEnt === 'mios' && !(esEntr && entrenadoresDe(ev).includes(sesion.nombre))) return false;
     if (filtroCat && ev.categorias) {
       const cats = ev.categorias.split(',').map(c=>c.trim().toLowerCase());
       if (!cats.includes(filtroCat.toLowerCase())) return false;
@@ -4242,6 +4313,26 @@ function renderCalendario() {
     return `${dias[dt.getDay()]} ${parseInt(d)} de ${meses[parseInt(m)-1]} de ${y}`;
   };
 
+  const esEntrenador = sesion && sesion.tipo === 'entrenador';
+  const bloqueEntrenadores = (ev, pasado) => {
+    const lista = entrenadoresDe(ev);
+    const yoEstoy = esEntrenador && lista.includes(sesion.nombre);
+    const chips = lista.map(n => {
+      const propio = esEntrenador && n === sesion.nombre;
+      const quitar = esAdmin
+        ? `<button type="button" title="Quitar" onclick="calQuitarEntrenador(${ev.id}, ${esc(JSON.stringify(n))})" style="border:none;background:none;cursor:pointer;color:inherit;font-size:12px;padding:0 0 0 2px;line-height:1">✕</button>`
+        : '';
+      return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:3px 9px;border-radius:20px;background:${propio?'var(--navy)':'#e8f4ec'};color:${propio?'#fff':'#1d6b3c'};border:1px solid ${propio?'var(--navy)':'#bfe0ca'}">👤 ${esc(n)}${quitar}</span>`;
+    }).join('');
+    const vacio = lista.length === 0
+      ? `<span style="font-size:12px;color:#9c7a14;background:#fdf3d9;border:1px solid #e8d5a0;padding:3px 9px;border-radius:20px">Sin entrenador todavía</span>`
+      : '';
+    const boton = (esEntrenador && !pasado)
+      ? `<button type="button" class="btn btn-sm ${yoEstoy?'':'btn-primary'}" onclick="calToggleMiNombre(${ev.id})">${yoEstoy ? 'Quitar mi nombre' : '✋ Me apunto'}</button>`
+      : '';
+    return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px">${chips}${vacio}${boton}</div>`;
+  };
+
   const renderEvento = (ev) => {
     const color = COLOR_TIPO[ev.tipo] || COLOR_TIPO.otro;
     const etiqueta = TIPO_EVENTO[ev.tipo] || 'Otro';
@@ -4257,10 +4348,10 @@ function renderCalendario() {
           <span style="font-size:11px;font-weight:600;color:${color};text-transform:uppercase;letter-spacing:.04em">${etiqueta}</span>
           ${localidadBadge}
           ${ev.categorias ? `<span style="font-size:11px;color:var(--text-muted);background:var(--bg);padding:1px 7px;border-radius:20px;border:1px solid var(--border)">${esc(ev.categorias)}</span>` : ''}
-          ${ev.entrenador ? `<span style="font-size:11px;color:var(--text-muted)">👤 ${esc(ev.entrenador)}</span>` : ''}
         </div>
         <div style="font-weight:600;font-size:15px;color:var(--navy);margin-bottom:2px">${esc(ev.titulo)}</div>
         <div style="font-size:12.5px;color:var(--text-muted)">${fmtFechaEvento(ev.fecha)}${ev.hora ? ' · ' + ev.hora.slice(0,5) + 'h' : ''}${ev.lugar ? ' · ' + esc(ev.lugar) : ''}</div>
+        ${bloqueEntrenadores(ev, pasado)}
         ${ev.notas ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;padding:8px;background:var(--bg);border-radius:6px">${esc(ev.notas)}</div>` : ''}
       </div>
       ${esAdmin ? `<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
