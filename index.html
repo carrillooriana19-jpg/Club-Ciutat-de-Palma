@@ -2487,7 +2487,8 @@ function guardarAtleta() {
   const anioNacimiento = fnacIso ? parseInt(fnacIso.split('-')[0]) : null;
   const categoria = document.getElementById('na-categoria').value;
   const dni = document.getElementById('na-dni').value.trim();
-  const cuota = a ? (a.cuota || 45) : 45;
+  const aExistente = id ? atletas.find(x => x.id === parseInt(id)) : null;
+  const cuota = aExistente ? (aExistente.cuota || 45) : 45;
   const email = document.getElementById('na-email').value.trim();
   const tel = document.getElementById('na-tel').value.trim();
   const municipio = document.getElementById('na-municipio').value.trim();
