@@ -1506,7 +1506,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-09-24-03';
+const BUILD_ID = '2026-09-25-01';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2439,7 +2439,7 @@ function verFichaAtleta(id) {
   document.getElementById('fa-notas').textContent = a.notas || '—';
   const d = (typeof deudaAtleta === 'function' ? deudaAtleta(id) : 0) + (typeof deudaCargo === 'function' ? deudaCargo(id) : 0);
   document.getElementById('fa-deuda').innerHTML = d>0 ? `<span style="color:var(--red);font-weight:600">Deuda: ${d}€</span>` : '<span style="color:var(--ok)">Sin deuda</span>';
-  const hist = pagos.filter(p=>p.atletaId===id).sort((a,b)=>b.mes.localeCompare(a.mes));
+  const hist = pagos.filter(p=>p.atletaId===id).sort((a,b)=>(b.mes||'').localeCompare(a.mes||''));
   document.getElementById('fa-historial').innerHTML = hist.length ? hist.map(p=>`<tr><td>${fmtMesPag(p.mes)}</td><td>${p.importe}€</td><td>${badgePP(p.estado)}</td><td style="font-size:11px">${fmtFPag(p.fecha)}</td><td style="font-size:11px">${esc(p.notas||'')}</td><td><button class="btn btn-sm" onclick="togglePagoPag(${p.id});verFichaAtleta(${id})">⟳</button></td></tr>`).join('')
     : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);font-size:13px">Sin historial</td></tr>';
   window._fichaAtletaId = id;
