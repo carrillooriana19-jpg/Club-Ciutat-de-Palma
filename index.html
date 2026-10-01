@@ -1544,9 +1544,16 @@ function esc(s) {
   if (s === null || s === undefined) return '';
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function todayStr() {
-  const d = new Date();
+// Formatea un objeto Date como 'aaaa-mm-dd' usando el huso horario LOCAL del
+// dispositivo, nunca UTC. Esto es importante: Date.toISOString() convierte a
+// UTC, y como España va por delante de UTC, la medianoche local de un día
+// puede caer en el día anterior en UTC. Eso hacía que, por ejemplo, el
+// último día de un mes desapareciera del filtro "Este mes" del calendario.
+function fechaLocalISO(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function todayStr() {
+  return fechaLocalISO(new Date());
 }
 
 /* ---------- PERSISTENCIA ---------- */
@@ -2024,7 +2031,7 @@ function openModal(id) {
         : atletasFlexibles.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(a=>`<option value="${a.id}">${esc(a.nombre)}</option>`).join('');
     }
     document.getElementById('af-importe').value = '';
-    document.getElementById('af-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('af-fecha').value = todayStr();
     document.getElementById('af-notas').value = '';
     document.getElementById('af-error').textContent = '';
     afMostrarSaldo();
@@ -2423,6 +2430,8 @@ function renderBajasTab() {
 function verFichaAtleta(id) {
   const a = atletas.find(x => x.id === id);
   if (!a) return;
+  window._fichaAtletaId = id;
+  openModal('ficha-atleta');
   document.getElementById('fa-nombre').textContent = a.nombre;
   document.getElementById('fa-estado-badge').textContent = a.estado==='activo'?'Activo':'Baja';
   document.getElementById('fa-estado-badge').className = 'badge ' + (a.estado==='activo'?'badge-ok':'badge-gray');
@@ -2442,8 +2451,6 @@ function verFichaAtleta(id) {
   const hist = pagos.filter(p=>p.atletaId===id).sort((a,b)=>(b.mes||'').localeCompare(a.mes||''));
   document.getElementById('fa-historial').innerHTML = hist.length ? hist.map(p=>`<tr><td>${fmtMesPag(p.mes)}</td><td>${p.importe}€</td><td>${badgePP(p.estado)}</td><td style="font-size:11px">${fmtFPag(p.fecha)}</td><td style="font-size:11px">${esc(p.notas||'')}</td><td><button class="btn btn-sm" onclick="togglePagoPag(${p.id});verFichaAtleta(${id})">⟳</button></td></tr>`).join('')
     : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);font-size:13px">Sin historial</td></tr>';
-  window._fichaAtletaId = id;
-  openModal('ficha-atleta');
 }
 
 function fechaDmyAIso(f) {
@@ -2506,7 +2513,7 @@ function guardarAtleta() {
     if (a) { Object.assign(a, { nombre, categoria, anioNacimiento, fechaNacimiento, dni, cuota, email, tel, municipio, tutor, notas, paga }); }
   } else {
     const nuevoId = Math.max(0, ...atletas.map(a => a.id), 122) + 1;
-    atletas.push(normalizarAtleta({ id: nuevoId, nombre, categoria, estado: 'activo', anioNacimiento, fechaNacimiento, dni, cuota, email, tel, municipio, tutor, notas, paga, alta: new Date().toISOString().split('T')[0] }));
+    atletas.push(normalizarAtleta({ id: nuevoId, nombre, categoria, estado: 'activo', anioNacimiento, fechaNacimiento, dni, cuota, email, tel, municipio, tutor, notas, paga, alta: todayStr() }));
   }
   save();
   closeModal('nuevo-atleta');
@@ -2891,8 +2898,8 @@ async function generarInformePDF() {
    MÓDULO DE PAGOS — funciones integradas desde Pagos_ciutat
    ===================================================================== */
 
-function fmtMesPag(ym) { if (!ym) return ''; const [y,m] = ym.split('-'); return MESES_PAGOS[parseInt(m)-1] + ' ' + y; }
-function fmtFPag(d) { if (!d) return '—'; const [y,m,dd] = d.split('-'); return dd+'/'+m+'/'+y; }
+function fmtMesPag(ym) { if (!ym) return ''; const partes = String(ym).split('-'); if (partes.length < 2) return String(ym); const [y,m] = partes; return (MESES_PAGOS[parseInt(m)-1] || m) + ' ' + y; }
+function fmtFPag(d) { if (!d) return '—'; const partes = String(d).split('-'); if (partes.length < 3) return String(d); const [y,m,dd] = partes; return dd+'/'+m+'/'+y; }
 function deudaAtleta(id) { return pagos.filter(p => p.atletaId===id && (p.estado==='vencido'||p.estado==='pendiente')).reduce((s,p) => s+p.importe, 0); }
 function deudaCargo(id) { return cargoPagos.filter(c => c.atletaId===id && (c.estado==='vencido'||c.estado==='pendiente')).reduce((s,c) => s+c.importe, 0); }
 function badgePP(e) {
@@ -3156,7 +3163,7 @@ function guardarAbonoFlexible() {
   const deuda = pagos.find(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='deuda');
   if (!deuda) { err.textContent = 'Este atleta no tiene pago flexible asignado.'; return; }
   err.textContent = '';
-  const fechaVal = document.getElementById('af-fecha').value || new Date().toISOString().split('T')[0];
+  const fechaVal = document.getElementById('af-fecha').value || todayStr();
   const abonos = pagos.filter(p=>p.atletaId===atletaId&&p.modalidad==='flexible'&&p.tipo==='abono');
   const totalAbonado = abonos.reduce((s,p)=>s+p.importe,0) + imp;
   pagos.push({
@@ -3420,7 +3427,7 @@ function renderPgPagos() {
     selMes.innerHTML = '<option value="">Todos los meses</option>' +
       mesesDisponibles.map(m => `<option value="${m}"${cur===m?' selected':''}>${fmtMesPag(m)}</option>`).join('');
   }
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = todayStr();
   // Auto-marcar como vencido si pasó la fecha límite y sigue pendiente
   let cambioVencido = false;
   pagos.forEach(p => {
@@ -3483,7 +3490,7 @@ function renderPgPagos() {
 
 function renderPgAlertas() {
   const alerts = [];
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = todayStr();
   pagos.filter(p => p.estado==='vencido').forEach(p => {
     const a = atletas.find(x=>x.id===p.atletaId);
     if (a && a.estado==='activo') alerts.push({ tipo:'danger', txt:`Plazo vencido — <strong>${esc(a.nombre)}</strong> — ${esc(p.label||'Plazo')} — ${p.importe}€ (límite ${fmtFPag(p.fechaLimite)})` });
@@ -3506,7 +3513,7 @@ function renderPgAlertas() {
 function togglePagoPag(id) {
   const p = pagos.find(x=>x.id===id); if (!p) return;
   if (p.estado==='pagado') { p.estado='pendiente'; p.fecha=null; }
-  else { p.estado='pagado'; p.fecha=new Date().toISOString().split('T')[0]; }
+  else { p.estado='pagado'; p.fecha=todayStr(); }
   save(); renderPgPagos();
 }
 
@@ -3648,7 +3655,7 @@ function renderPgPaginador(elId, cur, total, cb, count) {
 function toggleCargoPag(id) {
   const cp = cargoPagos.find(x=>x.id===id); if (!cp) return;
   if (cp.estado==='pagado') { cp.estado='pendiente'; cp.fecha=null; }
-  else { cp.estado='pagado'; cp.fecha=new Date().toISOString().split('T')[0]; }
+  else { cp.estado='pagado'; cp.fecha=todayStr(); }
   save(); renderPgCargos();
 }
 
@@ -4220,7 +4227,7 @@ function eliminarEvento(id) {
 }
 
 function actualizarBadgeCalendario() {
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = todayStr();
   const proximos = eventos.filter(e => e.fecha >= hoy).length;
   const badge = document.getElementById('cal-badge');
   if (!badge) return;
@@ -4253,7 +4260,7 @@ function renderCalendario() {
   const filtroPeriodo = document.getElementById('cal-filtro-periodo')?.value || '';
 
   const hoy = new Date();
-  const hoyStr = hoy.toISOString().split('T')[0];
+  const hoyStr = fechaLocalISO(hoy);
 
   // Calcular rango de fechas según periodo
   let desdeStr = null, hastaStr = null;
@@ -4261,24 +4268,24 @@ function renderCalendario() {
     const lunes = new Date(hoy);
     lunes.setDate(hoy.getDate() - ((hoy.getDay()+6)%7));
     const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
-    desdeStr = lunes.toISOString().split('T')[0];
-    hastaStr = domingo.toISOString().split('T')[0];
+    desdeStr = fechaLocalISO(lunes);
+    hastaStr = fechaLocalISO(domingo);
   } else if (filtroPeriodo === 'finde') {
     const diaSemana = hoy.getDay(); // 0=dom,6=sab
     const sabado = new Date(hoy);
     sabado.setDate(hoy.getDate() + ((6 - diaSemana + 7) % 7));
     const domingo = new Date(sabado); domingo.setDate(sabado.getDate() + 1);
-    desdeStr = sabado.toISOString().split('T')[0];
-    hastaStr = domingo.toISOString().split('T')[0];
+    desdeStr = fechaLocalISO(sabado);
+    hastaStr = fechaLocalISO(domingo);
   } else if (filtroPeriodo === 'mes') {
     desdeStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-01`;
     const ultimo = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0);
-    hastaStr = ultimo.toISOString().split('T')[0];
+    hastaStr = fechaLocalISO(ultimo);
   } else if (filtroPeriodo === 'mes-sig') {
     const sig = new Date(hoy.getFullYear(), hoy.getMonth()+1, 1);
-    desdeStr = sig.toISOString().split('T')[0];
+    desdeStr = fechaLocalISO(sig);
     const ultimoSig = new Date(hoy.getFullYear(), hoy.getMonth()+2, 0);
-    hastaStr = ultimoSig.toISOString().split('T')[0];
+    hastaStr = fechaLocalISO(ultimoSig);
   }
 
   const selEntFiltro = document.getElementById('cal-filtro-ent');
@@ -4693,7 +4700,7 @@ function guardarPedidoUnif() {
     id: nextIdPagos++, atletaId, prendas, total,
     pagado: false, entregado: false,
     notas: document.getElementById('unif-notas').value.trim(),
-    fecha: new Date().toISOString().split('T')[0]
+    fecha: todayStr()
   });
   save();
   closeModal('nuevo-pedido-unif');
@@ -4806,7 +4813,7 @@ function guardarPagosMensuales() {
       importe: r.importe,
       fechaLimite: `${r.mes}-${ultimoDia}`,
       estado: r.estado,
-      fecha: r.estado === 'pagado' ? new Date().toISOString().split('T')[0] : null,
+      fecha: r.estado === 'pagado' ? todayStr() : null,
       notas: ''
     });
   });
