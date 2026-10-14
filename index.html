@@ -683,6 +683,7 @@ tr:last-child td { border-bottom: none; }
         <div class="card" style="margin-bottom:14px">
           <div class="toolbar" style="flex-wrap:wrap;gap:8px">
             <div class="toolbar-left" style="flex-wrap:wrap;gap:8px">
+              <button class="btn btn-sm" onclick="exportarCalendarioPDF()">📄 Exportar PDF</button>
               <select id="cal-filtro-tipo" onchange="renderCalendario()">
                 <option value="">Todos los tipos</option>
                 <option value="partido">Partido</option>
@@ -1506,7 +1507,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-09-25-01';
+const BUILD_ID = '2026-09-26-01';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -4233,6 +4234,104 @@ function actualizarBadgeCalendario() {
   if (!badge) return;
   if (proximos > 0) { badge.textContent = proximos; badge.style.display = ''; }
   else badge.style.display = 'none';
+}
+
+async function exportarCalendarioPDF() {
+  // Exporta SIEMPRE todos los partidos del calendario (pasados y futuros),
+  // sin tener en cuenta los filtros que se estén usando en pantalla, porque
+  // lo que se pide es un listado completo para imprimir o compartir.
+  const partidos = eventos.filter(e => e.tipo === 'partido').slice()
+    .sort((a,b) => (a.fecha + ' ' + (a.hora||'00:00')).localeCompare(b.fecha + ' ' + (b.hora||'00:00')));
+
+  if (partidos.length === 0) { alert('Todavía no hay ningún partido en el calendario.'); return; }
+  if (!window.PDFLib) { alert('No se pudo cargar el generador de PDF. Revisa tu conexión a internet e inténtalo de nuevo.'); return; }
+
+  const { PDFDocument, rgb, StandardFonts } = window.PDFLib;
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const navy = rgb(0.059, 0.122, 0.239);
+  const gris = rgb(0.45, 0.45, 0.45);
+  const grisClaro = rgb(0.6, 0.6, 0.6);
+  const blanco = rgb(1, 1, 1);
+  const fondo = rgb(0.965, 0.957, 0.937);
+  const texto = rgb(0.11, 0.14, 0.19);
+
+  // Apaisado (landscape): hay varias columnas de texto (lugar, categorías,
+  // entrenadores) que necesitan más ancho para leerse bien.
+  const PW = 842, PH = 595, M = 36;
+  const COLS = ['Fecha', 'Hora', 'Partido', 'Lugar', 'Categorías', 'Entrenadores'];
+  const COL_WIDTHS = [150, 42, 190, 150, 118, 120];
+  const ROW_H = 20, HEAD_H = 22;
+
+  const hoyStr = todayStr();
+  const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const fmtFecha = (f) => {
+    const [y,m,d] = f.split('-');
+    const dt = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+    return `${dias[dt.getDay()].slice(0,3)} ${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+  };
+
+  let page = pdfDoc.addPage([PW, PH]);
+  let y = PH - M;
+
+  const dibujarCabecera = () => {
+    page.drawText('C.N Ciutat de Palma — Calendario de partidos', { x: M, y, font: fontBold, size: 14, color: navy });
+    y -= 15;
+    page.drawText(`Generado el ${new Date().toLocaleDateString('es-ES')} · ${partidos.length} partido(s) en total`, { x: M, y, font, size: 9, color: gris });
+    y -= 18;
+    page.drawRectangle({ x: M, y: y - 4, width: PW - M * 2, height: HEAD_H, color: navy });
+    let x = M + 5;
+    COLS.forEach((col, i) => {
+      page.drawText(col, { x, y: y + 3, font: fontBold, size: 9.5, color: blanco });
+      x += COL_WIDTHS[i];
+    });
+    y -= (HEAD_H - 4);
+  };
+
+  const nuevaPagina = () => {
+    page = pdfDoc.addPage([PW, PH]);
+    y = PH - M;
+    dibujarCabecera();
+  };
+
+  dibujarCabecera();
+
+  partidos.forEach((ev, idx) => {
+    if (y < M + ROW_H + 10) nuevaPagina();
+    if (idx % 2 === 0) {
+      page.drawRectangle({ x: M, y: y - 5, width: PW - M * 2, height: ROW_H, color: fondo });
+    }
+    const pasado = ev.fecha < hoyStr;
+    const colorFila = pasado ? grisClaro : texto;
+    const vs = ev.localidad === 'visitante' ? `✈ en ${ev.rival || '—'}` : `🏠 vs ${ev.rival || '—'}`;
+    const entNombres = entrenadoresDe(ev);
+    const valores = [
+      fmtFecha(ev.fecha),
+      ev.hora || '—',
+      vs.slice(0, 32),
+      (ev.lugar || '—').slice(0, 26),
+      (ev.categorias || 'Todas').slice(0, 20),
+      (entNombres.length ? entNombres.join(', ') : 'Sin asignar').slice(0, 22)
+    ];
+    let x = M + 5;
+    valores.forEach((val, i) => {
+      page.drawText(String(val), { x, y: y + 3, font, size: 8.5, color: colorFila });
+      x += COL_WIDTHS[i];
+    });
+    y -= ROW_H;
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `calendario_partidos_${todayStr()}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function renderCalendario() {
