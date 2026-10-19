@@ -1180,6 +1180,7 @@ tr:last-child td { border-bottom: none; }
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('ficha-atleta')">Cerrar</button>
+      <button class="btn btn-danger" id="fa-btn-eliminar-pagos" style="display:none" onclick="eliminarPagosAtleta(window._fichaAtletaId)">🗑 Eliminar pagos</button>
       <button class="btn btn-primary" onclick="closeModal('ficha-atleta');editarAtleta(window._fichaAtletaId)">Editar atleta</button>
     </div>
   </div>
@@ -1507,7 +1508,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-09-26-02';
+const BUILD_ID = '2026-09-27-01';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2423,6 +2424,9 @@ function renderBajasTab() {
       <td data-label="Deuda">${d>0?`<span style="color:var(--red);font-weight:600">${d}€</span>`:'—'}</td>
       <td data-label="Acciones" style="white-space:nowrap">
         <button class="btn btn-sm btn-success" onclick="reactivarAtleta(${a.id})">↩ Reactivar</button>
+        ${d>0 || pagos.some(p=>p.atletaId===a.id) || cargoPagos.some(c=>c.atletaId===a.id)
+          ? `<button class="btn btn-sm btn-danger" onclick="eliminarPagosAtleta(${a.id})">🗑 Eliminar pagos</button>`
+          : ''}
       </td>
     </tr>`;
   }).join('');
@@ -2436,6 +2440,7 @@ function verFichaAtleta(id) {
   document.getElementById('fa-nombre').textContent = a.nombre;
   document.getElementById('fa-estado-badge').textContent = a.estado==='activo'?'Activo':'Baja';
   document.getElementById('fa-estado-badge').className = 'badge ' + (a.estado==='activo'?'badge-ok':'badge-gray');
+  document.getElementById('fa-btn-eliminar-pagos').style.display = (a.estado === 'baja') ? '' : 'none';
   document.getElementById('fa-categoria-badge').textContent = a.categoria || 'Sin categoría';
   const modAtletaFicha = pagos.find(p=>p.atletaId===id&&p.temporada==='26-27');
   const modsLabels={'3plazos':'Opción A — 3 plazos','2plazos':'Opción B — 2 plazos','1pago':'Opción C — Pago único','mensual':'Opción D — Mensual','flexible':'Opción E — Flexible'};
@@ -2550,7 +2555,28 @@ function darBajaAtleta(id) {
   renderEquipos();
 }
 
+function eliminarPagosAtleta(id) {
+  const a = atletas.find(x => x.id === id);
+  if (!a) return;
+  if (a.estado !== 'baja') {
+    if (!confirm(`${a.nombre} todavía está activo/a. Esto borra TODO su historial de pagos y cuotas, no solo la deuda pendiente, y no se puede deshacer.\n\n¿Seguro que quieres continuar?`)) return;
+  } else {
+    const nPagos = pagos.filter(p => p.atletaId === id).length;
+    const nCargos = cargoPagos.filter(c => c.atletaId === id).length;
+    const total = nPagos + nCargos;
+    if (total === 0) { alert(`${a.nombre} no tiene pagos ni cuotas registrados.`); return; }
+    if (!confirm(`Se eliminarán ${total} registro(s) de pago de ${a.nombre} (cuotas y cargos). Esta acción no se puede deshacer. ¿Continuar?`)) return;
+  }
+  pagos = pagos.filter(p => p.atletaId !== id);
+  cargoPagos = cargoPagos.filter(c => c.atletaId !== id);
+  save();
+  renderBajasTab();
+  if (typeof renderAdminAtletas === 'function') renderAdminAtletas();
+  if (document.getElementById('modal-ficha-atleta').classList.contains('open')) verFichaAtleta(id);
+}
+
 function reactivarAtleta(id) {
+
   const a = atletas.find(x => x.id === id);
   if (!a) return;
   a.estado = 'activo';
