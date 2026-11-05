@@ -884,6 +884,7 @@ tr:last-child td { border-bottom: none; }
               <button class="btn btn-sm" onclick="generarPlazosTemporada()">Generar plazos pendientes</button>
               <button class="btn btn-sm" onclick="openModal('add-pago-mensual')">+ Añadir pago mensual</button>
               <button class="btn btn-sm" onclick="openModal('add-abono-flexible')">+ Añadir abono flexible</button>
+              <button class="btn btn-sm btn-danger" onclick="openModal('eliminar-pagos-atleta')">🗑 Eliminar pagos de un atleta</button>
             </div>
           </div>
 
@@ -1361,6 +1362,22 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-eliminar-pagos-atleta">
+  <div class="modal">
+    <h3>Eliminar pagos de un atleta</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Borra todos los plazos, pagos mensuales, abonos y pagos únicos de la persona elegida. Útil cuando se da de baja. No se puede deshacer.</p>
+    <div class="field"><label>Buscar atleta</label><input id="epa-buscar" type="search" placeholder="Nombre..." oninput="epaFiltrar()"></div>
+    <div class="field"><label>Atleta</label>
+      <select id="epa-atleta" size="6" style="height:auto" onchange="epaResumen()"></select>
+    </div>
+    <div id="epa-resumen" style="font-size:13px;margin-bottom:6px;color:var(--text-muted)"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('eliminar-pagos-atleta')">Cancelar</button>
+      <button class="btn btn-danger" onclick="eliminarTodosPagosDesdePagos()">Eliminar todos sus pagos</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-edit-pago">
   <div class="modal">
     <h3>Editar plazo</h3>
@@ -1508,7 +1525,7 @@ const DATA_VERSION = '5-atletas-unificado';
 // una versión nueva a GitHub, hay que cambiar este valor (basta con la fecha/hora).
 // La app lo usa para detectar automáticamente si hay una versión más reciente
 // publicada y recargarse sola, sin que nadie tenga que borrar el historial.
-const BUILD_ID = '2026-09-27-01';
+const BUILD_ID = '2026-09-28-01';
 const DEFAULT_ADMIN_PASS = 'ciutat2026';
 const DEFAULT_START_COBROS = '2026-07';
 // Código de sincronización fijo del club: viene incluido en el propio archivo,
@@ -2037,6 +2054,10 @@ function openModal(id) {
     document.getElementById('af-notas').value = '';
     document.getElementById('af-error').textContent = '';
     afMostrarSaldo();
+  }
+  if (id === 'eliminar-pagos-atleta') {
+    document.getElementById('epa-buscar').value = '';
+    epaFiltrar();
   }
   if (id === 'asignar-modalidad') {
     document.getElementById('am-buscar').value = '';
@@ -3509,7 +3530,7 @@ function renderPgPagos() {
         <td>${badgePP(p.estado)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${fmtFPag(p.fecha)}</td>
         <td style="font-size:12px;color:var(--text-muted)">${esc(p.notas||'')}</td>
-        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditPagoPag(${p.id})">✏</button> <button class="btn btn-sm" onclick="abrirCambiarModalidadUno(${p.atletaId})" title="Cambiar modalidad">↺</button></td>
+        <td style="white-space:nowrap">${toggleBtn} <button class="btn btn-sm" onclick="openEditPagoPag(${p.id})">✏</button> <button class="btn btn-sm" onclick="abrirCambiarModalidadUno(${p.atletaId})" title="Cambiar modalidad">↺</button> <button class="btn btn-sm btn-danger" onclick="eliminarPagoPag(${p.id})" title="Eliminar este pago">🗑</button></td>
       </tr>`;
     }).join('');
   renderPgPaginador('pg-pag-pagos', pagPagosPag, pages, p => { pagPagosPag=p; renderPgPagos(); }, total);
@@ -3535,6 +3556,57 @@ function renderPgAlertas() {
     ? alerts.map(al => `<div style="padding:8px 10px;margin-bottom:6px;border-radius:var(--radius-sm);background:${al.tipo==='danger'?'#fbe9e8':'#fdf3d9'};font-size:13px">${al.txt}</div>`).join('')
     : '<div style="color:var(--text-muted);font-size:13px">Sin alertas activas.</div>';
   updatePagosNavBadge();
+}
+
+// Elimina un único plazo / pago mensual / abono
+function eliminarPagoPag(id) {
+  const p = pagos.find(x => x.id === id); if (!p) return;
+  const a = atletas.find(x => x.id === p.atletaId);
+  const que = p.tipo === 'abono' ? 'este abono' : (p.mes ? `el pago de ${fmtMesPag(p.mes)}` : `el plazo "${p.label || 'Plazo'}"`);
+  if (!confirm(`¿Eliminar ${que} de ${a ? a.nombre : 'este atleta'} (${p.importe}€)? No se puede deshacer.`)) return;
+  pagos = pagos.filter(x => x.id !== id);
+  save();
+  refrescarVistasPagos();
+}
+
+// Modal "Eliminar pagos de un atleta": lista solo atletas con algún pago
+function epaFiltrar() {
+  const q = (document.getElementById('epa-buscar').value || '').toLowerCase();
+  const sel = document.getElementById('epa-atleta');
+  const conPagos = atletas.filter(a => pagos.some(p => p.atletaId === a.id) || cargoPagos.some(c => c.atletaId === a.id))
+    .filter(a => !q || a.nombre.toLowerCase().includes(q))
+    .sort((x, y) => (x.estado === 'baja') - (y.estado === 'baja') || x.nombre.localeCompare(y.nombre));
+  // Los de baja primero para encontrarlos rápido
+  conPagos.sort((x, y) => (y.estado === 'baja') - (x.estado === 'baja') || x.nombre.localeCompare(y.nombre));
+  sel.innerHTML = conPagos.length
+    ? conPagos.map(a => `<option value="${a.id}">${esc(a.nombre)}${a.estado === 'baja' ? ' (de baja)' : ''}</option>`).join('')
+    : '<option value="" disabled>Ningún atleta con pagos</option>';
+  document.getElementById('epa-resumen').textContent = '';
+}
+
+function epaResumen() {
+  const id = parseInt(document.getElementById('epa-atleta').value);
+  const el = document.getElementById('epa-resumen');
+  if (!id) { el.textContent = ''; return; }
+  const n = pagos.filter(p => p.atletaId === id).length;
+  const m = cargoPagos.filter(c => c.atletaId === id).length;
+  el.textContent = `Se borrarán ${n} pago(s) / plazo(s) y ${m} pago(s) único(s).`;
+}
+
+function eliminarTodosPagosDesdePagos() {
+  const id = parseInt(document.getElementById('epa-atleta').value);
+  const a = atletas.find(x => x.id === id);
+  if (!a) { alert('Elige primero un atleta de la lista.'); return; }
+  const total = pagos.filter(p => p.atletaId === id).length + cargoPagos.filter(c => c.atletaId === id).length;
+  const aviso = a.estado === 'baja'
+    ? `Se eliminarán ${total} registro(s) de pago de ${a.nombre}. No se puede deshacer. ¿Continuar?`
+    : `${a.nombre} sigue ACTIVO/A. Se eliminarán ${total} registro(s) de pago, incluidos los de su cuota. No se puede deshacer. ¿Seguro?`;
+  if (!confirm(aviso)) return;
+  pagos = pagos.filter(p => p.atletaId !== id);
+  cargoPagos = cargoPagos.filter(c => c.atletaId !== id);
+  save();
+  closeModal('eliminar-pagos-atleta');
+  refrescarVistasPagos();
 }
 
 function togglePagoPag(id) {
